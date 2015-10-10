@@ -6,12 +6,16 @@ class Instruction
 {
     private $name;
     private $opcode;
-    private $exec;
+    private $addrMode;
+    private $length;
+    private $cycles;
 
-    private function __construct($name, $opcode, $exec)
+    private function __construct($name, $opcode, $addrMode, $length, $cycles)
     {
         $this->name = $name;
         $this->opcode = $opcode;
-        $this->exec = $exec;
+        $this->addrMode = $addrMode;
+        $this->length = $length;
+        $this->cycles = $cycles;
     }
 }
