@@ -213,5 +213,10 @@ class InstructionSet
     {
         $this->instructions[$instruction->getOpcode()] = $instruction;
     }
+
+    public function dump()
+    {
+        return $this->instructions;
+    }
     
 }
