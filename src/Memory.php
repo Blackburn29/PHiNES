@@ -27,4 +27,9 @@ class Memory
     public function write($address, $value) {
         $this->memory[$address] = $value;
     }
+
+    public static function samePage($a1, $a2)
+    {
+        return !(($a1 ^ $a2) >> 8);
+    }
 }

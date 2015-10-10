@@ -10,17 +10,17 @@ class InstructionSet
     /* Addressing Modes */
     const ADR_IMP = 0; //Implied
     const ADR_ACC = 1; //Accumulator
-    const ADR_IMM = 2; //Immediate
-    const ADR_ABS = 3; //Absolute
-    const ADR_ZP = 7; //Zero Page
-    const ADR_REL = 6; //Relative
+    const ADR_IMM = 2; //Immediate *
+    const ADR_ABS = 3; //Absolute *
+    const ADR_ZP = 7; //Zero Page *
+    const ADR_REL = 6; //Relative *
     const ADR_ABSX = 4; //Absolute Indexed X
     const ADR_ABSY = 5; //Absolute Indexed Y
-    const ADR_ZPX = 8; //Zero Page Indexed X
-    const ADR_ZPY = 9; //Zero Page Indexed Y
+    const ADR_ZPX = 8; //Zero Page Indexed X *
+    const ADR_ZPY = 9; //Zero Page Indexed Y *
     const ADR_INXINDR = 10; //Indexed Indirect
     const ADR_INDRINX = 11; //Indirect Index
-    const ADR_INDR = 12; //Indirect
+    const ADR_INDR = 12; //Indirect *
 
     private $instructions = [];
 
@@ -209,11 +209,19 @@ class InstructionSet
         $this->addInstruction(new Instruction('STY', 0x8C, self::ADR_ABS, 3, 4));
     }
 
+    /*
+     * Add an instruction to the array, indexed by its opcode.
+     * @param Instruction the instruction to save
+     */
     private function addInstruction(Instruction $instruction)
     {
         $this->instructions[$instruction->getOpcode()] = $instruction;
     }
 
+    /**
+     * Return the instruction set array
+     * @return associative array of instructions
+     */
     public function dump()
     {
         return $this->instructions;
