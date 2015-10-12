@@ -6,16 +6,25 @@ use PHiNES\CPU;
 
 class CpuTest extends \PHPUnit_Framework_TestCase
 {
+    public function testIndirectAddressingModeGetsValuesCorrectly()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x02);
+
+        $value = $this->cpu->indirect();
+        var_dump($value);
+    }
+
     public function testCpuWillInitializeCorrectly()
     {
         $regs = $this->cpu->getRegisters();
-        $this->assertEquals(0, $regs->A);
-        $this->assertEquals(0, $regs->X);
-        $this->assertEquals(0, $regs->Y);
-        $this->assertEquals(0, $regs->X);
-        $this->assertEquals(1, $regs->P);
-        $this->assertEquals(0xFD, $regs->SP);
-        $this->assertEquals(0xFFFC, $regs->PC);
+        $this->assertEquals(0, $regs->getA());
+        $this->assertEquals(0, $regs->getX());
+        $this->assertEquals(0, $regs->getY());
+        $this->assertEquals(0, $regs->getX());
+        $this->assertEquals(1, $regs->getP());
+        $this->assertEquals(0xFD, $regs->getSP());
+        $this->assertEquals(0xFFFC, $regs->getPC());
 
         $ints = $this->cpu->getInterrupts();
         $this->assertEquals(false, $ints->IRQ);

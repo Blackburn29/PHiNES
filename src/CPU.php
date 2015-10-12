@@ -23,7 +23,7 @@ class CPU
     /* Addressing Modes */
     public function immediate()
     {
-        $addr = $this->registers->PC;
+        $addr = $this->registers->getPC();
         $this->registers->incrementPC(1);
 
         return $addr;
@@ -31,7 +31,7 @@ class CPU
 
     public function zeroPage()
     {
-        $value = $this->memory->read($this->registers->PC);
+        $value = $this->memory->read($this->registers->getPC());
         $this->registers->incrementPC(1);
 
         return $value;
@@ -41,9 +41,9 @@ class CPU
     {
         switch($mode) {
             case InstructionSet::ADR_ZPX:
-                return $this->registers->X;
+                return $this->registers->getX();
             case InstructionSet::ADR_ZPY:
-                return $this->registers->Y;
+                return $this->registers->getY();
         }
     }
 
@@ -51,7 +51,7 @@ class CPU
     {
         $reg = $this->getRegisterFromAddressingMode($mode);
 
-        $mem = $this->memory->read($this->registers->PC);
+        $mem = $this->memory->read($this->registers->getPC());
         $this->registers->incrementPC(1);
 
         return $mem + $reg;
@@ -59,7 +59,7 @@ class CPU
 
     public function relative()
     {
-        $mem = $this->memory->read($this->registers->PC);
+        $mem = $this->memory->read($this->registers->getPC());
 
         if ($mem > 0x7F) {
             $offset = -(0x100 - $mem);
@@ -68,14 +68,14 @@ class CPU
         }
 
         $this->registers->incrementPC(1);
-        $value = $this->registers->PC + $offset;
+        $value = $this->registers->getPC() + $offset;
 
     }
 
     public function absolute()
     {
-        $low = $this->memory->read($this->registers->PC);
-        $high = $this->memory->read($this->registers->PC + 1);
+        $low = $this->memory->read($this->registers->getPC());
+        $high = $this->memory->read($this->registers->getPC() + 1);
 
         $this->registers->incrementPC(2);
 
@@ -86,8 +86,8 @@ class CPU
 
     public function indirect()
     {
-        $low = $this->memory->read($this->registers->PC);
-        $high = $this->memory->read($this->registers->PC + 1);
+        $low = $this->memory->read($this->registers->getPC());
+        $high = $this->memory->read($this->registers->getPC() + 1);
 
         $this->registers->incrementPC(2);
 
@@ -104,7 +104,7 @@ class CPU
 
     public function absoluteIndexed($mode)
     {
-        $mem = $this->memory->read($this->registers->PC);
+        $mem = $this->memory->read($this->registers->getPC());
     }
 
     public function getRegisters()
