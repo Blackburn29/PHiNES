@@ -79,9 +79,7 @@ class CPU
 
         $this->registers->incrementPC(2);
 
-        //TODO: This in incorrect. Will need to change because of PHP's lack of
-        //unsigned integers.
-        return ($high << 8) | $low;
+        return (($high << 8) & 0xFF) | $low;
     }
 
     public function indirect()
@@ -91,15 +89,13 @@ class CPU
 
         $this->registers->incrementPC(2);
 
-        //TODO: This in incorrect. Will need to change because of PHP's lack of
-        //unsigned integers.
-        $addressLow = ($high << 8) | $low;
-        $addressHigh = ($high << 8) | ($low + 1);
+        $addressLow = (($high << 8) & 0xFF) | $low;
+        $addressHigh = (($high << 8) & 0xFF) | ($low + 1);
 
         $low = $this->memory->read($addressLow);
         $high = $this->memory->read($addressHigh);
 
-        return ($high << 8) | $low;
+        return (($high << 8) & 0xFF) | $low;
     }
 
     public function absoluteIndexed($mode)
