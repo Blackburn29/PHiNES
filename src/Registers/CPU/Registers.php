@@ -46,7 +46,7 @@ class Registers
 
     public function setA($val)
     {
-        $this->A = $val;
+        $this->A = $val & 0xFF;
         $this->A = $this->A & 0xFF;
     }
 
@@ -57,8 +57,7 @@ class Registers
 
     public function setX($val)
     {
-        $this->X = $val;
-        $this->X = $this->X & 0xFF;
+        $this->X = $val & 0xFF;
     }
 
     public function getY()
@@ -68,8 +67,7 @@ class Registers
 
     public function setY($val)
     {
-        $this->Y = $val;
-        $this->Y = $this->Y & 0xFF;
+        $this->Y = $val & 0xFF;
     }
 
     public function getP()
@@ -79,8 +77,7 @@ class Registers
 
     public function setP($val)
     {
-        $this->P = $val;
-        $this->P = $this->P & 0xFF;
+        $this->P = $val & 0xFF;
     }
 
     public function getSP()
@@ -90,8 +87,7 @@ class Registers
 
     public function setSP($val)
     {
-        $this->SP = $val;
-        $this->SP = $this->SP & 0xFF;
+        $this->SP = $val & 0xFF;
     }
 
     public function getPC()
