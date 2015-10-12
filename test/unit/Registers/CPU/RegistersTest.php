@@ -32,6 +32,30 @@ class RegistersTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0x0FA, $this->registers->getSP());
     }
 
+    public function flags()
+    {
+        return [
+            [Registers::C],
+            [Registers::Z],
+            [Registers::I],
+            [Registers::D],
+            [Registers::B],
+            [Registers::U],
+            [Registers::V],
+            [Registers::N],
+        ];
+    }
+    /**
+     * @dataProvider flags
+     */
+    public function testStatusFlagsCanBeRetrievedSuccessfully($bit)
+    {
+        $this->registers->setP($bit); //Disable all flags except carry
+        $this->assertTrue($this->registers->getStatus($bit));
+        $this->registers->setP(0x00);
+        $this->assertNotTrue($this->registers->getStatus($bit));
+    }
+
     public function setUp()
     {
         $this->registers = new Registers();

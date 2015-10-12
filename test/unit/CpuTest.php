@@ -22,7 +22,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $regs->getX());
         $this->assertEquals(0, $regs->getY());
         $this->assertEquals(0, $regs->getX());
-        $this->assertEquals(1, $regs->getP());
+        $this->assertEquals(0x24, $regs->getP());
         $this->assertEquals(0xFD, $regs->getSP());
         $this->assertEquals(0xFFFC, $regs->getPC());
 

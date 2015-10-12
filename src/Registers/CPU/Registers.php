@@ -9,25 +9,36 @@ namespace PHiNES\Registers\CPU;
 
 class Registers
 {
-    const C = 1;
-    const Z = 1;
-    const I = 1;
-    const D = 1;
-    const B = 1;
-    const U = 1;
-    const V = 1;
-    const N = 1;
+    //Status Masks
+    const C = 0x01;
+    const Z = 0x02;
+    const I = 0x04;
+    const D = 0x08;
+    const B = 0x10;
+    const U = 0x20;
+    const V = 0x40;
+    const N = 0x60;
 
     private $A; //8bit
     private $X; //8bit
     private $Y; //8bit
-    private $P; //8bit
+    private $P; //6bits - status flags
     private $SP; //8bit
     private $PC; //16bit
 
     public function __construct()
     {
         $this->reset();
+    }
+
+    /**
+     * Returns the status bit specified
+     * @param $bit the mask to use for each status bit
+     * @return boolean
+     */
+    public function getStatus($mask)
+    {
+        return !($this->P & $mask) == 0;
     }
 
     /**
@@ -103,7 +114,7 @@ class Registers
         $this->A = 0;
         $this->X = 0;
         $this->Y = 0;
-        $this->P = self::I;
+        $this->P = 0x24;
         $this->SP = 0xFD;
         $this->PC = 0xFFFC;
     }
