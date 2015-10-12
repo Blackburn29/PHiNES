@@ -2,6 +2,8 @@
 
 namespace PHiNES;
 
+use PHiNES\Exception\MemoryOverflowException;
+
 class Memory
 {
     const MEM_SIZE = 65536;
@@ -25,6 +27,11 @@ class Memory
     }
 
     public function write($address, $value) {
+        if ($value > 0xFFFF) {
+            throw new MemoryOverflowException(
+                sprintf("Value %X too large! At address %X", $value, $address)
+            );
+        }
         $this->memory[$address] = $value;
     }
 
