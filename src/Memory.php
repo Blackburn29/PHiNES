@@ -1,4 +1,7 @@
 <?php
+/**
+ * Emulates the memory in the NES console.
+ */
 
 namespace PHiNES;
 
@@ -31,7 +34,19 @@ class Memory
      * @return int an '8bit' integer
      */
     public function read($address) {
-        return $this->memory[$address];
+        return $this->memory[$address] & 0xFF;
+    }
+
+    /**
+     * Reads a 16bit block of memory and returns the value
+     * @param @address int
+     * @return int '16bit' integer
+     */
+    public function read16($address)
+    {
+        $low = $this->read($address);
+        $high = $this->read($address + 1);
+        return (($high << 8) | $low) & 0xFFFF;
     }
 
     /**

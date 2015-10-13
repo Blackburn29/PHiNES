@@ -6,15 +6,6 @@ use PHiNES\CPU;
 
 class CpuTest extends \PHPUnit_Framework_TestCase
 {
-    public function testIndirectAddressingModeGetsValuesCorrectly()
-    {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x02);
-
-        $value = $this->cpu->indirect();
-        var_dump($value);
-    }
-
     public function testCpuWillInitializeCorrectly()
     {
         $regs = $this->cpu->getRegisters();
@@ -34,6 +25,14 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         foreach ($this->cpu->getMemory() as $block) {
             $this->assertEquals(0xFF, $block);
         }
+    }
+
+    public function testAddCarryWillAddCorrectly()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getRegisters()->setA(0x10);
+        $this->cpu->execute(0x6D);
+        $this->assertEquals(0x20, $this->cpu->getRegisters()->getA());
     }
 
     protected function setUp()

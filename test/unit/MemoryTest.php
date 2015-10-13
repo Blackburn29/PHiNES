@@ -38,6 +38,14 @@ class MemoryTest extends \PHPUnit_Framework_TestCase
         $this->memory->write(0xAD111, 0x00);
     }
 
+    public function testRead16WillReturnValidWordOfData()
+    {
+        $this->memory->write(0x0000, 0xAA);
+        $this->memory->write(0x0001, 0xBB);
+        $value = $this->memory->read16(0x0000);
+        $this->assertEquals(0xBBAA, $value);
+    }
+
     protected function setUp()
     {
         $this->memory = new Memory();

@@ -1,10 +1,10 @@
 <?php
-
-namespace PHiNES\Instructions\CPU;
-
 /**
  * Generates an instruction set for the 6502
  */
+
+namespace PHiNES\Instructions\CPU;
+
 class InstructionSet
 {
     /* Addressing Modes */
@@ -222,9 +222,8 @@ class InstructionSet
      * Return the instruction set array
      * @return associative array of instructions
      */
-    public function dump()
+    public function getInstructions()
     {
         return $this->instructions;
     }
-    
 }

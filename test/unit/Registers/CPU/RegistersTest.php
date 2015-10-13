@@ -56,6 +56,17 @@ class RegistersTest extends \PHPUnit_Framework_TestCase
         $this->assertNotTrue($this->registers->getStatus($bit));
     }
 
+    public function testOverflowFlagWillSetCorrectly()
+    {
+        $this->registers->setP(0x00); //Clear all status registers
+
+        $this->registers->setOverflow(0xAFFFF);
+        $this->assertTrue($this->registers->getStatus(Registers::V));
+
+        $this->registers->setOverflow(0x0A);
+        $this->assertNotTrue($this->registers->getStatus(Registers::V));
+    }
+
     public function setUp()
     {
         $this->registers = new Registers();

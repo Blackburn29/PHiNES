@@ -9,6 +9,6 @@ class InstructionSetTest extends \PHPUnit_Framework_TestCase
     public function testInstructionSetContainsCorrectNumberOfInstructions()
     {
         $instructionSet = new InstructionSet();
-        $this->assertCount(150, $instructionSet->dump());
+        $this->assertCount(150, $instructionSet->getInstructions());
     }
 }
