@@ -62,10 +62,11 @@ class CPU
     {
         switch($mode) {
             case InstructionSet::ADR_IMP:
+                //noop
                 return;
 
             case InstructionSet::ADR_ACC:
-                return;
+                return $this->accumulator();
 
             case InstructionSet::ADR_IMM:
                 return $this->immediate();
@@ -92,10 +93,10 @@ class CPU
                 return $this->zeroPageIndex(InstructionSet::ADR_ZPY);
 
             case InstructionSet::ADR_INXINDR:
-                return;
+                return $this->indexIndirect();
 
             case InstructionSet::ADR_INDRINX:
-                return;
+                return $this->indirectIndex();
 
             case InstructionSet::ADR_INDR:
                 return $this->indirect();
@@ -103,6 +104,11 @@ class CPU
     }
 
     /* Addressing Modes */
+    public function accumulator()
+    {
+        return $this->registers->getA();
+    }
+
     public function immediate()
     {
         $addr = $this->registers->getPC();
@@ -183,6 +189,27 @@ class CPU
     public function absoluteIndexed($mode)
     {
         $mem = $this->memory->read($this->registers->getPC());
+    }
+
+    public function indirectIndex()
+    {
+        $value = $this->memory->read($this->registers->getPC());
+
+        $low = $this->memory->read($value);
+        $high = $this->memory->read(($value + 1) & 0x00FF);
+
+        return (($high << 8) | $low) + $this->registers->getY();
+    }
+
+    public function indexIndirect()
+    {
+        $value = $this->memory->read($this->registers->getPC());
+        $adr = ($value + $this->registers->getX()) & 0xFFFF;
+
+        $low = $this->memory->read($adr);
+        $high = $this->memory->read(($adr + 1) & 0x00FF);
+
+        return (($high << 8) | $low);
     }
 
 
