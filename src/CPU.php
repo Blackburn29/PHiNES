@@ -20,7 +20,7 @@ class CPU
 
     public function __construct()
     {
-        $this->instructions = new InstructionSet();
+        $this->instructions = InstructionSet::createDefault();
         $this->registers = new Registers();
         $this->interrupts = new Interrupts();
         $this->memory = new Memory();
@@ -34,6 +34,7 @@ class CPU
     {
         $this->opMap = [
             'ADC' => function($v){$this->adc($v);},
+            'AND' => function($v){$this->andA($v);},
         ];
     }
 
@@ -111,36 +112,18 @@ class CPU
 
     public function immediate()
     {
-        $addr = $this->registers->getPC();
-        $this->registers->incrementPC(1);
-
-        return $addr;
+         return $this->registers->getPC();
     }
 
     public function zeroPage()
     {
-        $value = $this->memory->read($this->registers->getPC());
-        $this->registers->incrementPC(1);
-
-        return $value;
-    }
-
-    private function getRegisterFromAddressingMode($mode)
-    {
-        switch($mode) {
-            case InstructionSet::ADR_ZPX:
-                return $this->registers->getX();
-            case InstructionSet::ADR_ZPY:
-                return $this->registers->getY();
-        }
+        return $this->memory->read($this->registers->getPC());
     }
 
     public function zeroPageIndex($mode)
     {
         $reg = $this->getRegisterFromAddressingMode($mode);
-
         $mem = $this->memory->read($this->registers->getPC());
-        $this->registers->incrementPC(1);
 
         return $mem + $reg;
     }
@@ -148,15 +131,13 @@ class CPU
     public function relative()
     {
         $mem = $this->memory->read($this->registers->getPC());
+        $offset = $mem;
 
         if ($mem > 0x7F) {
             $offset = -(0x100 - $mem);
-        } else {
-            $offset = $mem;
         }
 
-        $this->registers->incrementPC(1);
-        $value = $this->registers->getPC() + $offset;
+        return $this->registers->getPC() + $offset;
 
     }
 
@@ -165,9 +146,7 @@ class CPU
         $low = $this->memory->read($this->registers->getPC());
         $high = $this->memory->read($this->registers->getPC() + 1);
 
-        $this->registers->incrementPC(2);
-
-        return (($high << 8) & 0xFF) | $low;
+        return $high << 8 | $low;
     }
 
     public function indirect()
@@ -175,20 +154,28 @@ class CPU
         $low = $this->memory->read($this->registers->getPC());
         $high = $this->memory->read($this->registers->getPC() + 1);
 
-        $this->registers->incrementPC(2);
-
-        $addressLow = (($high << 8) & 0xFF) | $low;
-        $addressHigh = (($high << 8) & 0xFF) | ($low + 1);
+        $addressLow = $high << 8 | $low;
+        $addressHigh = $high << 8 | ($low + 1);
 
         $low = $this->memory->read($addressLow);
         $high = $this->memory->read($addressHigh);
 
-        return (($high << 8) & 0xFF) | $low;
+        return $high << 8 | $low;
     }
 
     public function absoluteIndexed($mode)
     {
-        $mem = $this->memory->read($this->registers->getPC());
+        $low = $this->memory->read($this->registers->getPC());
+        $high = $this->memory->read($this->registers->getPC() + 1);
+
+        $addr = (($high << 8) | $low);
+        $result =  $addr + $this->getRegisterFromAddressingMode($mode);
+
+        if (!Memory::samePage($addr, $result)) {
+            $this->registers->incrementPC(1);
+        }
+
+        return $result;
     }
 
     public function indirectIndex()
@@ -197,8 +184,13 @@ class CPU
 
         $low = $this->memory->read($value);
         $high = $this->memory->read(($value + 1) & 0x00FF);
+        $result = (($high << 8) | $low) + $this->registers->getY();
 
-        return (($high << 8) | $low) + $this->registers->getY();
+        if (!Memory::samePage($value, $result)) {
+            $this->registers->incrementPC(1);
+        }
+
+        return $result;
     }
 
     public function indexIndirect()
@@ -209,7 +201,7 @@ class CPU
         $low = $this->memory->read($adr);
         $high = $this->memory->read(($adr + 1) & 0x00FF);
 
-        return (($high << 8) | $low);
+        return (($high << 8) & 0xFF) | $low;
     }
 
 
@@ -223,6 +215,11 @@ class CPU
         $this->registers->setZero($value);
         $this->registers->setA($value & 0xFF);
 
+    }
+
+    public function andA($value)
+    {
+        $this->registers->setA($this->registers->getA() & $value);
     }
 
     /**
@@ -250,5 +247,15 @@ class CPU
     public function getMemory()
     {
         return $this->memory;
+    }
+
+    private function getRegisterFromAddressingMode($mode)
+    {
+        switch($mode) {
+            case InstructionSet::ADR_ZPX:
+                return $this->registers->getX();
+            case InstructionSet::ADR_ZPY:
+                return $this->registers->getY();
+        }
     }
 }
