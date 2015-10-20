@@ -78,6 +78,50 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0x1110, $this->cpu->absolute());
     }
 
+    public function testIndirectAddressingModeReturnsCorrectValue()
+    {
+        //Write 0x1110 to memory as address
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x11);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        //Write 0x04 to that address
+        $this->cpu->getMemory()->write(0x1110, 0x04);
+
+        $this->assertEquals(0x04, $this->cpu->indirect());
+    }
+
+    public function testAbsoluteIndexedAddressingModeReturnsCorrectValue()
+    {
+        //Test X
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x11);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getRegisters()->setX(0x01);
+
+        $this->assertEquals(0x1111, $this->cpu->absoluteIndexed(InstructionSet::ADR_ZPX));
+
+        //Test Y
+        $this->cpu->getRegisters()->setY(0x02);
+        $this->assertEquals(0x1112, $this->cpu->absoluteIndexed(InstructionSet::ADR_ZPY));
+    }
+
+    public function testIndirectIndexAddressingModeReturnsCorrectValue()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getMemory()->write(0x10, 0x04);
+
+        //Test Y
+        $this->cpu->getRegisters()->setY(0x02);
+        $this->assertEquals(0x06, $this->cpu->indirectIndex());
+    }
+
+    public function testIndexedIndirectAddressingModeReturnsCorrectValue()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getRegisters()->setX(0x02);
+        $this->cpu->getMemory()->write(0x12, 0x04);
+
+        $this->assertEquals(0x04, $this->cpu->indexIndirect());
+    }
+
     public function testAddCarryWillAddCorrectly()
     {
         //Absolute

@@ -143,32 +143,25 @@ class CPU
 
     public function absolute()
     {
-        $low = $this->memory->read($this->registers->getPC());
-        $high = $this->memory->read($this->registers->getPC() + 1);
-
-        return $high << 8 | $low;
+        return $this->memory->read16($this->registers->getPC());
     }
 
     public function indirect()
     {
-        $low = $this->memory->read($this->registers->getPC());
-        $high = $this->memory->read($this->registers->getPC() + 1);
+        $addr =  $this->memory->read16($this->registers->getPC());
 
-        $addressLow = $high << 8 | $low;
-        $addressHigh = $high << 8 | ($low + 1);
+        //Handle rollover bug
+        $addrRoll = ($addr & 0xFF00) | (($addr & 0xFF) + 1);
 
-        $low = $this->memory->read($addressLow);
-        $high = $this->memory->read($addressHigh);
+        $high = $this->memory->read($addrRoll);
+        $low = $this->memory->read($addr);
 
-        return $high << 8 | $low;
+        return (($high << 8) | $low);
     }
 
     public function absoluteIndexed($mode)
     {
-        $low = $this->memory->read($this->registers->getPC());
-        $high = $this->memory->read($this->registers->getPC() + 1);
-
-        $addr = (($high << 8) | $low);
+        $addr = $this->memory->read16($this->registers->getPC());
         $result =  $addr + $this->getRegisterFromAddressingMode($mode);
 
         if (!Memory::samePage($addr, $result)) {
@@ -180,13 +173,10 @@ class CPU
 
     public function indirectIndex()
     {
-        $value = $this->memory->read($this->registers->getPC());
+        $indr = $this->indirect();
+        $result = $indr + $this->registers->getY();
 
-        $low = $this->memory->read($value);
-        $high = $this->memory->read(($value + 1) & 0x00FF);
-        $result = (($high << 8) | $low) + $this->registers->getY();
-
-        if (!Memory::samePage($value, $result)) {
+        if (!Memory::samePage($indr, $result)) {
             $this->registers->incrementPC(1);
         }
 
@@ -195,7 +185,7 @@ class CPU
 
     public function indexIndirect()
     {
-        $value = $this->memory->read($this->registers->getPC());
+        $value = $this->memory->read16($this->registers->getPC());
         $adr = ($value + $this->registers->getX()) & 0xFFFF;
 
         $low = $this->memory->read($adr);
