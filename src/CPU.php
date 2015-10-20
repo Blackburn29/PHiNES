@@ -35,6 +35,7 @@ class CPU
         $this->opMap = [
             'ADC' => function($v){$this->adc($v);},
             'AND' => function($v){$this->andA($v);},
+            'ASL' => function($v, $mode){$this->asl($v, $mode);},
         ];
     }
 
@@ -48,7 +49,7 @@ class CPU
         if (isset($this->instructions->getInstructions()[$opcode])) {
             $instruction = $this->instructions->getInstructions()[$opcode];
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
-            $this->opMap[$instruction->getName()]($value);
+            $this->opMap[$instruction->getName()]($value, $instruction->getAddressingMode());
         } else {
             throw new \Exception(sprintf("Invalid opcode %X", $opcode));
         }
@@ -210,6 +211,31 @@ class CPU
     public function andA($value)
     {
         $this->registers->setA($this->registers->getA() & $value);
+    }
+
+    public function asl($value, $mode)
+    {
+        if ($mode != InstructionSet::ADR_ACC) {
+            $value = $this->getMemory()->read($value);
+        }
+
+        $shifted = $this->shiftLeft($value);
+
+        if ($mode != InstructionSet::ADR_ACC) {
+            $this->getMemory()->write($value, $shifted);
+        } else {
+            $this->getRegisters()->setA($shifted);
+        }
+    }
+
+    private function shiftLeft($value)
+    {
+        $shifted = $value << 1;
+        $bit = (($value & Registers::C) == Registers::C) ? 1 : 0;
+        $this->getRegisters()->setCarry($bit);
+        $this->getRegisters()->setSign($bit);
+        
+        return $shifted;
     }
 
     /**

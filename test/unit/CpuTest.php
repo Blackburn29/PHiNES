@@ -139,6 +139,13 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0x01, $this->cpu->getRegisters()->getA());
     }
 
+    public function testAslShiftsAndSetsFlagsCorrectly()
+    {
+        $this->cpu->getRegisters()->setA(0x01);
+        $this->cpu->execute(0x0A);
+        $this->assertEquals(0x02, $this->cpu->getRegisters()->getA());
+    }
+
     protected function setUp()
     {
         $this->cpu = new CPU();

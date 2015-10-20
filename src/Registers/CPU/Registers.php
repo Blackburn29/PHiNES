@@ -15,7 +15,7 @@ class Registers
     const I = 0x04;
     const D = 0x08;
     const B = 0x10;
-    const U = 0x20;
+    const U = 0x20; //Unused
     const V = 0x40; //Overflow
     const N = 0x60; //Sign
 
