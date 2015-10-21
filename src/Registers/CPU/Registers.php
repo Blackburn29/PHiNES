@@ -203,6 +203,7 @@ class Registers
     /**
      * Dump all registers to a string
      * @return string
+     * @codeCoverageIgnore
      */
     public function toString()
     {
