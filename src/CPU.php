@@ -37,6 +37,8 @@ class CPU
             'AND' => function($v){$this->andA($v);},
             'ASL' => function($v, $mode){$this->asl($v, $mode);},
             'BCC' => function($v){$this->bcc($v);},
+            'BCS' => function($v){$this->bcs($v);},
+            'BEQ' => function($v){$this->beq($v);},
         ];
     }
 
@@ -222,7 +224,21 @@ class CPU
 
     public function bcc($value)
     {
+        if(!$this->getRegisters()->getStatus(Registers::C)) {
+            $this->getRegisters()->setPC($value);
+        }
+    }
+
+    public function bcs($value)
+    {
         if($this->getRegisters()->getStatus(Registers::C)) {
+            $this->getRegisters()->setPC($value);
+        }
+    }
+
+    public function beq($value)
+    {
+        if($this->getRegisters()->getStatus(Registers::Z)) {
             $this->getRegisters()->setPC($value);
         }
     }
