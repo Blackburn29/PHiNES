@@ -36,6 +36,7 @@ class CPU
             'ADC' => function($v){$this->adc($v);},
             'AND' => function($v){$this->andA($v);},
             'ASL' => function($v, $mode){$this->asl($v, $mode);},
+            'BCC' => function($v){$this->bcc($v);},
         ];
     }
 
@@ -139,7 +140,6 @@ class CPU
         }
 
         return $this->registers->getPC() + $offset;
-
     }
 
     public function absolute()
@@ -165,10 +165,6 @@ class CPU
         $addr = $this->memory->read16($this->registers->getPC());
         $result =  $addr + $this->getRegisterFromAddressingMode($mode);
 
-        if (!Memory::samePage($addr, $result)) {
-            $this->registers->incrementPC(1);
-        }
-
         return $result;
     }
 
@@ -176,10 +172,6 @@ class CPU
     {
         $indr = $this->indirect();
         $result = $indr + $this->registers->getY();
-
-        if (!Memory::samePage($indr, $result)) {
-            $this->registers->incrementPC(1);
-        }
 
         return $result;
     }
@@ -228,14 +220,11 @@ class CPU
         }
     }
 
-    private function shiftLeft($value)
+    public function bcc($value)
     {
-        $shifted = $value << 1;
-        $bit = (($value & Registers::C) == Registers::C) ? 1 : 0;
-        $this->getRegisters()->setCarry($bit);
-        $this->getRegisters()->setSign($bit);
-        
-        return $shifted;
+        if($this->getRegisters()->getStatus(Registers::C)) {
+            $this->getRegisters()->setPC($value);
+        }
     }
 
     /**
@@ -263,6 +252,16 @@ class CPU
     public function getMemory()
     {
         return $this->memory;
+    }
+
+    private function shiftLeft($value)
+    {
+        $shifted = $value << 1;
+        $bit = (($value & Registers::C) == Registers::C) ? 1 : 0;
+        $this->getRegisters()->setCarry($bit);
+        $this->getRegisters()->setSign($bit);
+        
+        return $shifted;
     }
 
     private function getRegisterFromAddressingMode($mode)
