@@ -136,7 +136,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
     {
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xFF);
         $this->cpu->getRegisters()->setA(0x01);
-        $this->cpu->execute(0x2D);
+        $this->cpu->execute(0x29);
         $this->assertEquals(0x01, $this->cpu->getRegisters()->getA());
     }
 
