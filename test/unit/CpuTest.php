@@ -3,6 +3,7 @@
 namespace PHiNES;
 
 use PHiNES\CPU;
+use PHiNES\Registers\CPU\Registers;
 use PHiNES\Instructions\CPU\InstructionSet;
 
 class CpuTest extends \PHPUnit_Framework_TestCase
@@ -144,6 +145,16 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->cpu->getRegisters()->setA(0x01);
         $this->cpu->execute(0x0A);
         $this->assertEquals(0x02, $this->cpu->getRegisters()->getA());
+    }
+
+    public function testBitOperationSetsFlagsCorrectly()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xFF);
+        $this->cpu->getRegisters()->setA(0xFF);
+        $this->cpu->execute(0x2C);
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::V));
     }
 
     protected function setUp()

@@ -17,7 +17,7 @@ class Registers
     const B = 0x10;
     const U = 0x20; //Unused
     const V = 0x40; //Overflow
-    const N = 0x60; //Sign
+    const N = 0x80; //Sign
 
     private $A; //8bit
     private $X; //8bit
@@ -69,7 +69,7 @@ class Registers
      */
     public function setZero($value)
     {
-        $this->setStatusBit(self::Z, $this->Z = $value == 0 ? 1 : 0);
+        $this->setStatusBit(self::Z, $value == 0 ? 1 : 0);
     }
 
     /**
@@ -217,7 +217,7 @@ class Registers
         );
     }
 
-    private function setStatusBit($mask, $value)
+    public function setStatusBit($mask, $value)
     {
         $this->P = $value ? $this->P | $mask : $this->P & (~ $mask);
     }

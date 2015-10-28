@@ -39,6 +39,7 @@ class CPU
             'BCC' => function($v){$this->bcc($v);},
             'BCS' => function($v){$this->bcs($v);},
             'BEQ' => function($v){$this->beq($v);},
+            'BIT' => function($v){$this->bit($v);},
         ];
     }
 
@@ -241,6 +242,16 @@ class CPU
         if($this->getRegisters()->getStatus(Registers::Z)) {
             $this->getRegisters()->setPC($value);
         }
+    }
+
+    public function bit($value) 
+    {
+        $value = $value & $this->getRegisters()->getA();
+        $bit6 = ($value & Registers::V) >> 6;
+        $bit7 = ($value & Registers::N) >> 7;
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setStatusBit(Registers::V, $bit6);
+        $this->getRegisters()->setStatusBit(Registers::N, $bit7);
     }
 
     /**
