@@ -157,6 +157,28 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::V));
     }
 
+    public function testClcClearsCarryAndBccSetsPCOnCarryClear()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFD);
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
+        $this->cpu->execute(0x18); //CLC
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0x90);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testSecSetsCarryAndBcsSetsPCOnCarrySet()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFD);
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 0);
+        $this->cpu->execute(0x38); //SEC
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0xB0);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
     public function testRotateLeftInstructionRotatesCorrectly()
     {
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);

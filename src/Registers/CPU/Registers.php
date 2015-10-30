@@ -92,6 +92,15 @@ class Registers
     }
 
     /**
+     * Set the program counter to the specified address
+     * @param int
+     */
+    public function setPC($value)
+    {
+        $this->PC = $value & 0xFFFF;
+    }
+
+    /**
      * Returns the A register.
      * @return int 0x00 - 0xFF
      */
