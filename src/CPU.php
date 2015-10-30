@@ -73,6 +73,21 @@ class CPU
             'PLP' => function($v){$this->plp($v);},
             'ROL' => function($v, $mode){$this->rol($v, $mode);},
             'ROR' => function($v, $mode){$this->ror($v, $mode);},
+            'RTI' => function($v){$this->rti($v);},
+            'RTS' => function($v){$this->rts($v);},
+            'SBC' => function($v){$this->sbc($v);},
+            'SEC' => function($v){$this->sec($v);},
+            'SED' => function($v){$this->sed($v);},
+            'SEI' => function($v){$this->sei($v);},
+            'STA' => function($v){$this->sta($v);},
+            'STX' => function($v){$this->stx($v);},
+            'STY' => function($v){$this->sty($v);},
+            'TAX' => function($v){$this->tax($v);},
+            'TAY' => function($v){$this->tay($v);},
+            'TSX' => function($v){$this->tsx($v);},
+            'TXA' => function($v){$this->txa($v);},
+            'TXS' => function($v){$this->txs($v);},
+            'TYA' => function($v){$this->tya($v);},
         ];
     }
 
@@ -551,6 +566,107 @@ class CPU
             $this->getRegisters()->setA($shifted);
         }
 
+    }
+
+    public function rti($address)
+    {
+        $this->getRegisters()->setP($this->pull());
+        $this->getRegisters()->setPC($this->pull16());
+    }
+
+    public function rts($address)
+    {
+        $this->getRegisters()->setPC($this->pull16() + 1);
+    }
+
+    public function sbc($address)
+    {
+        $value = $this->getRegisters()->getA() - $this->getMemory()->read($address);
+        $value = $value - (~$this->getRegisters()->getStatus(Registers::c));
+        $this->getRegisters()->setOverflow($value);
+        $this->getRegisters()->setCarry($value);
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setA($value);
+    }
+
+    public function sec($address)
+    {
+        $this->getRegisters()->setStatusBit(Registers::C, 1);
+    }
+
+    public function sed($address)
+    {
+        $this->getRegisters()->setStatusBit(Registers::D, 1);
+    }
+
+    public function sei($address)
+    {
+        $this->getRegisters()->setStatusBit(Registers::I, 1);
+    }
+
+    public function sta($address)
+    {
+        $this->getMemory()->write($address, $this->getRegisters()->getA());
+    }
+
+    public function stx($address)
+    {
+        $this->getMemory()->write($address, $this->getRegisters()->getX());
+    }
+
+    public function sty($address)
+    {
+        $this->getMemory()->write($address, $this->getRegisters()->getY());
+    }
+
+    public function tax($address)
+    {
+        $value = $this->getRegisters()->getA();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setX($value);
+    }
+    
+    public function tay($address)
+    {
+        $value = $this->getRegisters()->getA();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setY($value);
+    }
+
+    public function tsx($address)
+    {
+        $value = $this->getRegisters()->getSP();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setX($value);
+    }
+
+
+    public function txa($address)
+    {
+        $value = $this->getRegisters()->getX();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setA($value);
+    }
+
+    public function txs($address)
+    {
+        $value = $this->getRegisters()->getX();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setSP($value);
+    }
+
+    public function tya($address)
+    {
+        $value = $this->getRegisters()->getY();
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setA($value);
     }
 
     private function rotateLeft($value)

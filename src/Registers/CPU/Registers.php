@@ -12,8 +12,8 @@ class Registers
     //Status Masks
     const C = 0x01; //Carry
     const Z = 0x02; //Zero
-    const I = 0x04;
-    const D = 0x08;
+    const I = 0x04; //Interrupt
+    const D = 0x08; //Decimal
     const B = 0x10;
     const U = 0x20; //Unused
     const V = 0x40; //Overflow
@@ -37,7 +37,7 @@ class Registers
      */
     public function setOverflow($value)
     {
-        if (0xFF < $value) {
+        if (0x80 < $value) {
             $this->setStatusBit(self::V, 1);
         } else {
             $this->setStatusBit(self::V, 0);
@@ -103,7 +103,6 @@ class Registers
     public function setA($val)
     {
         $this->A = $val & 0xFF;
-        $this->A = $this->A & 0xFF;
     }
 
     /**
