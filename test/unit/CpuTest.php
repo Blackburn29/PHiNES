@@ -216,6 +216,39 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
     }
 
+    public function testBrkWillPushToStackAndSetPCFromInterruptVectorCorrectly()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->getMemory()->write(0xFFFF, 0xDD);
+        $this->cpu->getMemory()->write(0xFFFE, 0xEE);
+        $this->cpu->execute(0x00); //PC is incremented in this instruction as well
+        $this->assertEquals(0xDDEE, $this->cpu->getRegisters()->getPC());
+        $this->assertEquals($this->cpu->getRegisters()->getP() | Registers::B | Registers::U , $this->cpu->pull());
+        $this->assertEquals(0xFFFE, $this->cpu->pull16());
+    }
+
+    public function testClearAllStatusBitsWithPlpWillAllowBvcToSetPC()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->push(0x00);
+        $this->cpu->execute(0x28); //PLP
+        $this->assertEquals(0x00, $this->cpu->getRegisters()->getP());
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0x50); //BVC
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testSetAllStatusBitsWithPlpWillAllowBvsToSetPC()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->push(0xFF);
+        $this->cpu->execute(0x28); //PLP
+        $this->assertEquals(0xFF, $this->cpu->getRegisters()->getP());
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0x70); //BVS
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
     public function testBplSetsPCWhenSignBitIsClear()
     {
         $this->cpu->getRegisters()->setPC(0xFFFC);
@@ -227,6 +260,37 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
         $this->cpu->execute(0x10);
         $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testCldWillClearDecimalFlag()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::D, 1);
+        $this->cpu->execute(0xD8);
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::D));
+    }
+
+    public function testCliWillClearInterruptFlag()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::I, 1);
+        $this->cpu->execute(0x58);
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::I));
+    }
+
+    public function testClvWillClearOverflowFlag()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::V, 1);
+        $this->cpu->execute(0xB8);
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::V));
+    }
+
+    public function testCmpWillCorrectlyCompareAccumulatorAndMemory()
+    {
+        $this->cpu->getRegisters()->setA(0x05);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0xC9);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::N));
     }
 
     public function testRotateLeftInstructionRotatesCorrectly()

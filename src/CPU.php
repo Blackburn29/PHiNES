@@ -47,6 +47,7 @@ class CPU
             'BVC' => function($v){$this->bvc($v);},
             'BVS' => function($v){$this->bvs($v);},
             'CLC' => function($v){$this->clc($v);},
+            'CLD' => function($v){$this->cld($v);},
             'CLI' => function($v){$this->cli($v);},
             'CLV' => function($v){$this->clv($v);},
             'CMP' => function($v){$this->cmp($v);},
@@ -340,9 +341,8 @@ class CPU
 
     public function bvc($address)
     {
-        $value = $this->getMemory()->read($address);
         if (!$this->registers->getStatus(Registers::V)) {
-            $this->registers->setPC($value);
+            $this->registers->setPC($address);
         }
     }
 
@@ -733,6 +733,7 @@ class CPU
     public function push($value)
     {
         $this->getMemory()->write(0x100 | $this->registers->getSP(), $value);
+        $this->registers->setSP($this->registers->getSP() - 1);
     }
 
     public function push16($value)
@@ -744,14 +745,12 @@ class CPU
     public function pull()
     {
         $this->registers->setSP($this->registers->getSP() + 1);
-
         return $this->getMemory()->read(0x100 | $this->registers->getSP());
     }
 
     public function pull16()
     {
         $this->registers->setSP($this->registers->getSP() + 1);
-
         return $this->getMemory()->read16(0x100 | $this->registers->getSP());
 
     }
