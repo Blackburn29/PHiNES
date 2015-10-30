@@ -187,7 +187,6 @@ class CPU
         $offset = $mem;
 
         if ($mem > 0x7F) {
-            echo "This happenend/... \n";
             $offset = -(0x100 - $mem);
         }
 
