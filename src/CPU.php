@@ -101,10 +101,13 @@ class CPU
         if (isset($this->instructions->getInstructions()[$opcode])) {
             $instruction = $this->instructions->getInstructions()[$opcode];
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
+
+            $this->registers->incrementPC(1);
             $this->opMap[$instruction->getName()]($value, $instruction->getAddressingMode());
         } else {
             throw new \Exception(sprintf("Invalid opcode %X", $opcode));
         }
+
     }
 
     /**
@@ -306,25 +309,22 @@ class CPU
 
     public function bmi($address)
     {
-        $value = $this->getMemory()->read($address);
         if ($this->registers->getStatus(Registers::N)) {
-            $this->registers->setPC($value);
+            $this->registers->setPC($address);
         }
     }
 
     public function bne($address)
     {
-        $value = $this->getMemory()->read($address);
         if (!$this->registers->getStatus(Registers::Z)) {
-            $this->registers->setPC($value);
+            $this->registers->setPC($address);
         }
     }
 
     public function bpl($address)
     {
-        $value = $this->getMemory()->read($address);
         if (!$this->registers->getStatus(Registers::N)) {
-            $this->registers->setPC($value);
+            $this->registers->setPC($address);
         }
     }
 
@@ -348,9 +348,8 @@ class CPU
 
     public function bvs($address)
     {
-        $value = $this->getMemory()->read($address);
         if ($this->registers->getStatus(Registers::V)) {
-            $this->registers->setPC($value);
+            $this->registers->setPC($address);
         }
     }
 

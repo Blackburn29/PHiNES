@@ -159,7 +159,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testClcClearsCarryAndBccSetsPCOnCarryClear()
     {
-        $this->cpu->getRegisters()->setPC(0xFFFD);
+        $this->cpu->getRegisters()->setPC(0xFFFC);
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
         $this->cpu->execute(0x18); //CLC
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
@@ -170,12 +170,62 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testSecSetsCarryAndBcsSetsPCOnCarrySet()
     {
-        $this->cpu->getRegisters()->setPC(0xFFFD);
+        $this->cpu->getRegisters()->setPC(0xFFFC);
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 0);
         $this->cpu->execute(0x38); //SEC
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
         $this->cpu->execute(0xB0);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testBeqSetsPCWhenZeroIsLoadedToRegister()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x00);
+        $this->cpu->getRegisters()->setStatusBit(Registers::Z, 1);
+        $this->cpu->execute(0xA9); //LDA
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0xF0);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testBmiSetsPCWhenSignBitIsSet()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xFF);
+        $this->cpu->getRegisters()->setStatusBit(Registers::N, 0);
+        $this->cpu->execute(0xA2); //LDX
+        $this->assertEquals(0xFF, $this->cpu->getRegisters()->getX());
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0x30);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testBneSetsPCWhenNonZeroIsLoadedToRegister()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getRegisters()->setStatusBit(Registers::Z, 0);
+        $this->cpu->execute(0xA9); //SEC
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0xD0);
+        $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
+    }
+
+    public function testBplSetsPCWhenSignBitIsClear()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFFC);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x00);
+        $this->cpu->getRegisters()->setStatusBit(Registers::N, 0);
+        $this->cpu->execute(0xA4); //LDY
+        $this->assertEquals(0x00, $this->cpu->getRegisters()->getY());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x02);
+        $this->cpu->execute(0x10);
         $this->assertEquals(0xFFFF, $this->cpu->getRegisters()->getPC());
     }
 
