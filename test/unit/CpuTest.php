@@ -157,6 +157,28 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::V));
     }
 
+    public function testRotateLeftInstructionRotatesCorrectly()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
+        $this->cpu->getRegisters()->setA(0x6E);
+        $this->cpu->execute(0x2A);
+        $this->assertEquals(0xDD, $this->cpu->getRegisters()->getA());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testRotateRightInstructionRotatesCorrectly()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
+        $this->cpu->getRegisters()->setA(0x6E);
+        $this->cpu->execute(0x6A);
+        $this->assertEquals(0xB7, $this->cpu->getRegisters()->getA());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
     protected function setUp()
     {
         $this->cpu = new CPU();

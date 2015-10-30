@@ -60,7 +60,7 @@ class Registers
      */
     public function setSign($value)
     {
-        $this->setStatusBit(self::N, ($value >> 7) & 0x010);
+        $this->setStatusBit(self::N, ($value >> 7) & 0x01);
     }
 
     /**

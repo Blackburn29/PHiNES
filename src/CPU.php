@@ -68,6 +68,11 @@ class CPU
             'NOP' => function($v){$this->nop($v);},
             'ORA' => function($v){$this->ora($v);},
             'PHA' => function($v){$this->pha($v);},
+            'PHP' => function($v){$this->php($v);},
+            'PLA' => function($v){$this->pla($v);},
+            'PLP' => function($v){$this->plp($v);},
+            'ROL' => function($v, $mode){$this->rol($v, $mode);},
+            'ROR' => function($v, $mode){$this->ror($v, $mode);},
         ];
     }
 
@@ -493,6 +498,79 @@ class CPU
     public function pha($address)
     {
         $this->push($this->getRegisters()->getA());
+    }
+
+    public function php($address)
+    {
+        $this->push($this->getRegisters()->getA());
+    }
+
+    public function pla($address) 
+    {
+        $value = $this->pull();
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setA($value);
+    }
+
+    public function plp($address) 
+    {
+        $value = $this->pull();
+        $this->getRegisters()->setZero($value);
+        $this->getRegisters()->setSign($value);
+        $this->getRegisters()->setP($value);
+    }
+
+    public function rol($address, $mode)
+    {
+        if ($mode != InstructionSet::ADR_ACC) {
+            $address = $this->getMemory()->read($address);
+        }
+
+        $shifted = $this->rotateLeft($address);
+
+        if ($mode != InstructionSet::ADR_ACC) {
+            $this->getMemory()->write($address, $shifted);
+        } else {
+            $this->getRegisters()->setA($shifted);
+        }
+
+    }
+
+    public function ror($address, $mode)
+    {
+        if ($mode != InstructionSet::ADR_ACC) {
+            $address = $this->getMemory()->read($address);
+        }
+
+        $shifted = $this->rotateRight($address);
+
+        if ($mode != InstructionSet::ADR_ACC) {
+            $this->getMemory()->write($address, $shifted);
+        } else {
+            $this->getRegisters()->setA($shifted);
+        }
+
+    }
+
+    private function rotateLeft($value)
+    {
+        $bit7 = $value & Registers::N;
+        $shifted = ($value << 1 & 0xFE) | ($this->getRegisters()->getP() & Registers::C);
+        $this->getRegisters()->setStatusBit(Registers::C, $bit7);
+        $this->getRegisters()->setSign($shifted);
+        $this->getRegisters()->setZero($shifted);
+        return $shifted;
+    }
+
+    private function rotateRight($value)
+    {
+        $bit7 = $value & Registers::C;
+        $shifted = ($value >> 1 & 0x7F) | ($this->getRegisters()->getStatus(Registers::C) ? 0x80 : 0x00);
+        $this->getRegisters()->setStatusBit(Registers::C, $bit7);
+        $this->getRegisters()->setSign($shifted);
+        $this->getRegisters()->setZero($shifted);
+        return $shifted;
     }
 
     private function compare($register, $address)
