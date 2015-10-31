@@ -2,6 +2,9 @@
 
 namespace PHiNES\Interrupts\CPU;
 
+use PHiNES\CPU;
+use PHiNES\Registers\CPU\Registers;
+
 class Interrupts
 {
     const IRQ = 0;
@@ -37,5 +40,45 @@ class Interrupts
                 $this->RST = $val;
                 break;
         }
+    }
+
+    /**
+     * Maskable interrupt. 
+     * Push PC to stack
+     * Push P to stack
+     * Set I to ignore interrupts
+     * Read 16bit interrupt vector located at FFFE-F
+     * Place result in PC
+     */
+    public static function executeIrq(CPU $cpu)
+    {
+        $cpu->push16($cpu->getRegisters()->getPC());
+        $cpu->push($cpu->getRegisters()->getP());
+        $cpu->getRegisters()->setStatusBit(Registers::I, 1);
+        $addr = $cpu->getMemory()->read16(0xFFFE);
+        $cpu->getRegisters()->setPC($addr);
+    }
+
+    /**
+     * Non-maskable interrupt
+     * Same as IRQ except interrupt vector is at FFFA-B
+     */
+    public static function executeNmi(CPU $cpu)
+    {
+        $cpu->push16($cpu->getRegisters()->getPC());
+        $cpu->push($cpu->getRegisters()->getP());
+        $cpu->getRegisters()->setStatusBit(Registers::I, 1);
+        $addr = $cpu->getMemory()->read16(0xFFFA);
+        $cpu->getRegisters()->setPC($addr);
+    }
+
+    /**
+     * Reset interrupt.
+     * Set PC to initial starting address FFFC
+     */
+    public static function executeReset(CPU $cpu)
+    {
+        $addr = $cpu->getMemory()->read16(0xFFFC);
+        $cpu->getRegisters()->setPC($addr);
     }
 }

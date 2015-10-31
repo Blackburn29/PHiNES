@@ -18,6 +18,8 @@ class CPU
     private $memory;
     private $opMap;
 
+    private $pageFlag = false;
+
     public function __construct()
     {
         $this->instructions = InstructionSet::createDefault();
@@ -96,14 +98,23 @@ class CPU
      * Executes the given opcode
      * @param $opcode int 0x00 - 0xFF
      * @throws \Exception if opcode does not exist
+     * @return int the number of cycles used to execute opcode
      */
     public function execute($opcode)
     {
+        $cycles = 0;
+        $cycles += $this->watchAndExecuteInterrupts();
+
         if (isset($this->instructions->getInstructions()[$opcode])) {
             $instruction = $this->instructions->getInstructions()[$opcode];
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
 
+            $cycles+= $instruction->getCycles($this->pageFlag);
+            $this->pageFlag = false;
+
             $this->registers->incrementPC(1);
+
+            //Execute the instruction
             $this->opMap[$instruction->getName()]($value, $instruction->getAddressingMode());
         } else {
             throw new \Exception(sprintf("Invalid opcode %X", $opcode));
@@ -220,6 +231,10 @@ class CPU
         $addr = $this->memory->read16($this->registers->getPC());
         $result =  $addr + $this->getRegisterFromAddressingMode($mode);
 
+        if ($this->memory->samePage($addr, $result)) {
+            $this->pageFlag = true;
+        }
+
         return $result;
     }
 
@@ -227,6 +242,10 @@ class CPU
     {
         $indr = $this->indirect();
         $result = $indr + $this->registers->getY();
+
+        if ($this->memory->samePage($indr, $result)) {
+            $this->pageFlag = true;
+        }
 
         return $result;
     }
@@ -278,23 +297,18 @@ class CPU
 
     public function bcc($address)
     {
-        if (!$this->registers->getStatus(Registers::C)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch(!$this->registers->getStatus(Registers::C), $address);
     }
+
 
     public function bcs($address)
     {
-        if ($this->registers->getStatus(Registers::C)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch($this->registers->getStatus(Registers::C), $address);
     }
 
     public function beq($address)
     {
-        if ($this->registers->getStatus(Registers::Z)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch($this->registers->getStatus(Registers::Z), $address);
     }
 
     public function bit($address) 
@@ -310,23 +324,17 @@ class CPU
 
     public function bmi($address)
     {
-        if ($this->registers->getStatus(Registers::N)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch($this->registers->getStatus(Registers::N), $address);
     }
 
     public function bne($address)
     {
-        if (!$this->registers->getStatus(Registers::Z)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch(!$this->registers->getStatus(Registers::Z), $address);
     }
 
     public function bpl($address)
     {
-        if (!$this->registers->getStatus(Registers::N)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch(!$this->registers->getStatus(Registers::N), $address);
     }
 
     public function brk($address) 
@@ -341,16 +349,12 @@ class CPU
 
     public function bvc($address)
     {
-        if (!$this->registers->getStatus(Registers::V)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch(!$this->registers->getStatus(Registers::V), $address);
     }
 
     public function bvs($address)
     {
-        if ($this->registers->getStatus(Registers::V)) {
-            $this->registers->setPC($address);
-        }
+        $this->branch($this->registers->getStatus(Registers::V), $address);
     }
 
     public function clc($address)
@@ -755,6 +759,22 @@ class CPU
 
     }
 
+    private function watchAndExecuteInterrupts()
+    {
+        if (!$this->registers->getStatus(Registers::I)
+            && $this->interrupts->getInterrupt(Interrupts::IRQ)) {
+            Interrupts::executeIrq(this);
+        }
+
+        if ($this->interrupts->getInterrupt(Interrupts::NMI)) {
+            Interrupts::executeNmi(this);
+        }
+
+        if ($this->interrupts->getInterrupt(Interrupts::RST)) {
+            Interrupts::executeReset(this);
+        }
+    }
+
     private function shiftLeft($value)
     {
         $shifted = $value << 1;
@@ -781,6 +801,22 @@ class CPU
                 return $this->registers->getX();
             case InstructionSet::ADR_ZPY:
                 return $this->registers->getY();
+        }
+    }
+
+    /**
+     * Sets the PC if condition is met
+     * @param bool $condition 
+     * @param int $address
+     */
+    private function branch($condition, $address)
+    {
+        if ($this->memory->samePage($this->registers->getPC(), $address)) {
+            $this->pageFlag = true;
+        }
+
+        if ($condition) {
+            $this->registers->setPC($address);
         }
     }
 }

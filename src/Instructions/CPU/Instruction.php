@@ -48,4 +48,14 @@ class Instruction
     {
         return $this->addrMode;
     }
+
+    /**
+     * Returns the number of cycles the instruction takes to execute
+     * @param bool $pageCross the page cross flag to know when to increment cycles
+     * @return int
+     */
+    public function getCycles($pageCross)
+    {
+        return $pageCross ? $this->cycles + 1 : $this->cycles;
+    }
 }
