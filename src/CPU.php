@@ -759,20 +759,31 @@ class CPU
 
     }
 
+    /**
+     * Watch for interrupts and execute them if set
+     * @return int the number of cycles used to execute interrupts
+     */
     private function watchAndExecuteInterrupts()
     {
+        $cycles = 0;
+
         if (!$this->registers->getStatus(Registers::I)
             && $this->interrupts->getInterrupt(Interrupts::IRQ)) {
             Interrupts::executeIrq(this);
+            $cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::NMI)) {
             Interrupts::executeNmi(this);
+            $cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::RST)) {
             Interrupts::executeReset(this);
+            $cycles = 7;
         }
+
+        return $cycles;
     }
 
     private function shiftLeft($value)

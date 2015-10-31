@@ -57,6 +57,7 @@ class Interrupts
         $cpu->getRegisters()->setStatusBit(Registers::I, 1);
         $addr = $cpu->getMemory()->read16(0xFFFE);
         $cpu->getRegisters()->setPC($addr);
+        $this->setInterrupt(self::IRQ, false);
     }
 
     /**
@@ -70,6 +71,7 @@ class Interrupts
         $cpu->getRegisters()->setStatusBit(Registers::I, 1);
         $addr = $cpu->getMemory()->read16(0xFFFA);
         $cpu->getRegisters()->setPC($addr);
+        $this->setInterrupt(self::NMI, false);
     }
 
     /**
@@ -80,5 +82,6 @@ class Interrupts
     {
         $addr = $cpu->getMemory()->read16(0xFFFC);
         $cpu->getRegisters()->setPC($addr);
+        $this->setInterrupt(self::RST, false);
     }
 }
