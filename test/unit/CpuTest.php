@@ -291,6 +291,44 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    } 
+
+    public function testCpxWIllSetFlagsCorrectly()
+    {
+        //Zero
+        $this->cpu->getRegisters()->setX(0x00);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x00);
+        $this->cpu->execute(0xE0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        //Sign
+        $this->cpu->getRegisters()->setX(0x02);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->execute(0xE0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+        //Carry
+        $this->cpu->getRegisters()->setX(0x10);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->execute(0xE0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+    }
+
+    public function testCpyWIllSetFlagsCorrectly()
+    {
+        //Zero
+        $this->cpu->getRegisters()->setY(0x00);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x00);
+        $this->cpu->execute(0xC0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        //Sign
+        $this->cpu->getRegisters()->setY(0x02);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->execute(0xC0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+        //Carry
+        $this->cpu->getRegisters()->setY(0x10);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->execute(0xC0);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
     }
 
     public function testRotateLeftInstructionRotatesCorrectly()
