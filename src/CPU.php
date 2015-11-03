@@ -181,17 +181,20 @@ class CPU
     public function immediate()
     {
          return $this->registers->getPC();
+         $this->registers->incrementPC(1);
     }
 
     public function zeroPage()
     {
         return $this->memory->read($this->registers->getPC());
+        $this->registers->incrementPC(1);
     }
 
     public function zeroPageIndex($mode)
     {
         $reg = $this->getRegisterFromAddressingMode($mode);
         $mem = $this->memory->read($this->registers->getPC());
+        $this->registers->incrementPC(1);
 
         return $mem + $reg;
     }
@@ -205,17 +208,20 @@ class CPU
             $offset = -(0x100 - $mem);
         }
 
+        $this->registers->incrementPC(1);
         return $this->registers->getPC() + $offset;
     }
 
     public function absolute()
     {
         return $this->memory->read16($this->registers->getPC());
+        $this->registers->incrementPC(2);
     }
 
     public function indirect()
     {
         $addr =  $this->memory->read16($this->registers->getPC());
+        $this->registers->incrementPC(2);
 
         //Handle rollover bug
         $addrRoll = ($addr & 0xFF00) | (($addr & 0xFF) + 1);
@@ -230,6 +236,7 @@ class CPU
     {
         $addr = $this->memory->read16($this->registers->getPC());
         $result =  $addr + $this->getRegisterFromAddressingMode($mode);
+        $this->registers->incrementPC(2);
 
         if ($this->memory->samePage($addr, $result)) {
             $this->pageFlag = true;
@@ -242,6 +249,7 @@ class CPU
     {
         $indr = $this->indirect();
         $result = $indr + $this->registers->getY();
+        $this->registers->incrementPC(1);
 
         if ($this->memory->samePage($indr, $result)) {
             $this->pageFlag = true;
@@ -254,6 +262,7 @@ class CPU
     {
         $value = $this->memory->read16($this->registers->getPC());
         $adr = ($value + $this->registers->getX()) & 0xFFFF;
+        $this->registers->incrementPC(1);
 
         $low = $this->memory->read($adr);
         $high = $this->memory->read(($adr + 1) & 0x00FF);
@@ -429,10 +438,19 @@ class CPU
         $this->registers->setZero($value);
     }
 
+    public function inc($address)
+    {
+        $value = $this->getMemory()->read($address) + 1;
+        $this->getMemory()->write($address, $value & 0xFF);
+
+        $this->registers->setSign($value);
+        $this->registers->setZero($value);
+    }
+
     public function inx($address)
     {
         //Implied only
-        $value = $this->registers->getX() - 1;
+        $value = $this->registers->getX() + 1;
         $this->registers->setX($value);
         $this->registers->setSign($value);
         $this->registers->setZero($value);
@@ -442,7 +460,7 @@ class CPU
     public function iny($address)
     {
         //Implied only
-        $value = $this->registers->getY() - 1;
+        $value = $this->registers->getY() + 1;
         $this->registers->setY($value);
         $this->registers->setSign($value);
         $this->registers->setZero($value);
@@ -517,7 +535,7 @@ class CPU
 
     public function php($address)
     {
-        $this->push($this->registers->getA());
+        $this->push($this->registers->getP());
     }
 
     public function pla($address) 

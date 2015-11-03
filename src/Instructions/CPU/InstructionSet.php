@@ -156,7 +156,7 @@ class InstructionSet
         $set->addInstruction(new Instruction('TAX', 0xAA, self::ADR_IMP, 1, 2));
         $set->addInstruction(new Instruction('TXA', 0x8A, self::ADR_IMP, 1, 2));
         $set->addInstruction(new Instruction('DEX', 0xCA, self::ADR_IMP, 1, 2));
-        $set->addInstruction(new Instruction('INX', 0xEA, self::ADR_IMP, 1, 2));
+        $set->addInstruction(new Instruction('INX', 0xE8, self::ADR_IMP, 1, 2));
         $set->addInstruction(new Instruction('TAY', 0xA8, self::ADR_IMP, 1, 2));
         $set->addInstruction(new Instruction('TYA', 0x98, self::ADR_IMP, 1, 2));
         $set->addInstruction(new Instruction('DEY', 0x88, self::ADR_IMP, 1, 2));
