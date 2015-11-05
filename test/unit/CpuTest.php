@@ -548,6 +548,64 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xFFF0));
     }
 
+    public function testTaxWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setA(0xFE);
+        $this->cpu->getRegisters()->setX(0x00);
+        $this->cpu->execute(0xAA);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getX());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testTayWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setA(0xFE);
+        $this->cpu->getRegisters()->setY(0x00);
+        $this->cpu->execute(0xA8);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getY());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testTsxWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setSP(0xFE);
+        $this->cpu->getRegisters()->setX(0x00);
+        $this->cpu->execute(0xBA);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getX());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testTxaWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setX(0xFE);
+        $this->cpu->getRegisters()->setA(0x00);
+        $this->cpu->execute(0x8A);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getA());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testTxsWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setX(0xFE);
+        $this->cpu->getRegisters()->setSP(0x00);
+        $this->cpu->execute(0x9A);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getSP());
+    }
+
+    public function testTyaWillTransferValuesAcrossRegisters()
+    {
+        $this->cpu->getRegisters()->setY(0xFE);
+        $this->cpu->getRegisters()->setA(0x00);
+        $this->cpu->execute(0x98);
+        $this->assertEquals(0xFE, $this->cpu->getRegisters()->getA());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
     /**
      * @expectedException Exception
      */
