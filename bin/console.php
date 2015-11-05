@@ -4,10 +4,9 @@
 require __DIR__.'/../src/autoload.php';
 
 use Symfony\Component\Console\Application;
-use PMG\MBA\Commands\UpdateBidsCommand;
-use PMG\MBA\Commands\GetBidModifiersCommand;
+
+use PHiNES\Bundle\Command\RunEmu;
 
 $application = new Application();
-$application->add(new UpdateBidsCommand());
-$application->add(new GetBidModifiersCommand());
+$application->add(new RunEmu());
 $application->run();

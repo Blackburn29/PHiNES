@@ -12,16 +12,20 @@ use PHiNES\Memory;
 
 class CPU
 {
+    private $DEBUG = true;
+
     private $instructions;
     private $registers;
     private $interrupts;
     private $memory;
     private $opMap;
 
+    private $instrCounter = 1;
     private $pageFlag = false;
 
-    public function __construct()
+    public function __construct($DEBUG=false)
     {
+        $this->DEBUG = $DEBUG;
         $this->instructions = InstructionSet::createDefault();
         $this->registers = new Registers();
         $this->interrupts = new Interrupts();
@@ -95,13 +99,28 @@ class CPU
     }
 
     /**
+     * Steps using <enter> until exception is thrown
+     */
+    public function step()
+    {
+        for(;;) {
+            $this->execute();
+            sleep(0.5);
+        }
+    }
+
+    /**
      * Executes the given opcode
      * @param $opcode int 0x00 - 0xFF
      * @throws \Exception if opcode does not exist
      * @return int the number of cycles used to execute opcode
      */
-    public function execute($opcode)
+    public function execute($opcode=null)
     {
+        if (!$opcode) {
+            $opcode = $this->memory->read($this->registers->getPC());
+            
+        }
         $cycles = 0;
         $cycles += $this->watchAndExecuteInterrupts();
 
@@ -109,10 +128,15 @@ class CPU
             $instruction = $this->instructions->getInstructions()[$opcode];
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
 
+            if ($this->DEBUG) {
+                printf("%d %04X  %04X\t%s  %04X\t%s\n", $this->instrCounter++, $this->registers->getPC()-1, $instruction->getOpcode(), $instruction->getName(), $value, $this->registers->toString());
+            }
+
             $cycles+= $instruction->getCycles($this->pageFlag);
             $this->pageFlag = false;
 
             $this->registers->incrementPC(1);
+
 
             //Execute the instruction
             $this->opMap[$instruction->getName()]($value, $instruction->getAddressingMode());
@@ -325,10 +349,10 @@ class CPU
     public function bit($address) 
     {
         $value = $this->getMemory()->read($address);
-        $address = $address & $this->registers->getA();
-        $bit6 = ($address & Registers::V) >> 6;
-        $bit7 = ($address & Registers::N) >> 7;
-        $this->registers->setZero($address);
+        $and = $value & $this->registers->getA();
+        $bit6 = ($and & Registers::V) >> 6;
+        $bit7 = ($and & Registers::N) >> 7;
+        $this->registers->setZero($and);
         $this->registers->setStatusBit(Registers::V, $bit6);
         $this->registers->setStatusBit(Registers::N, $bit7);
     }
@@ -352,7 +376,7 @@ class CPU
     {
         $this->registers->incrementPC(1);
         $this->push16($this->registers->getPC());
-        $this->push($this->registers->getP() | Registers::B | Registers::U);
+        $this->push($this->registers->getP() | Registers::B);
 
         $this->registers->setStatusBit(Registers::I, 1);
         $this->registers->setPC($this->getMemory()->read16(0xFFFE));

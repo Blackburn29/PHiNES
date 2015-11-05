@@ -215,7 +215,7 @@ class Registers
      */
     public function toString()
     {
-        return sprintf("A:%X X:%X Y:%X P:%X SP:%X PC:%X",
+        return sprintf("A:%02X X:%02X Y:%02X P:%02X SP:%02X",
             $this->A,
             $this->X,
             $this->Y,

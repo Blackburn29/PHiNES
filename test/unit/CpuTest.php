@@ -170,6 +170,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
     public function testBitOperationSetsFlagsCorrectly()
     {
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC()+1, 0xFF);
+        $this->cpu->getMemory()->write(0xFFFF, 0xFF);
         $this->cpu->getRegisters()->setA(0xFF);
         $this->cpu->execute(0x2C);
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
@@ -715,6 +717,23 @@ class CpuTest extends \PHPUnit_Framework_TestCase
     public function testInvalidOpcodeWillThrowExeption()
     {
         $this->cpu->execute(0xFF);
+    }
+
+    /**
+     * @group romtest
+     */
+    public function testLoadingROMIntoMemory()
+    {
+        $this->cpu->getRegisters()->setP(0x24);
+        $this->cpu->getRegisters()->setSP(0xFD);
+        $this->cpu->getRegisters()->setPC(0xC000);
+        $this->cpu->getMemory()->load(__DIR__.'/../ROMs/nestest.nes');
+
+        $this->cpu->getMemory()->write(0x4004, 0xFF);
+        $this->cpu->getMemory()->write(0x4005, 0xFF);
+        $this->cpu->getMemory()->write(0x4006, 0xFF);
+        $this->cpu->getMemory()->write(0x4007, 0xFF);
+        $this->cpu->getMemory()->write(0x4015, 0xFF);
     }
 
     protected function setUp()

@@ -24,7 +24,7 @@ class Memory
     public function reset()
     {
         foreach ($this->memory as $block) {
-            $block = 0xFF;
+            $block = 0x00;
         }
     }
 
@@ -63,6 +63,31 @@ class Memory
         }
 
         $this->memory[$address] = $value;
+    }
+
+    public function load($file)
+    {
+        $j = 0xC000;
+        $headers = [];
+        $data = file_get_contents($file);
+        if ($data[0] != 'N' && $data[1] != 'E' && $data[2] != 'S') {
+            throw new \Exception('Invalid ROM file');
+        }
+        $data = unpack('C*', $data);
+
+        for ($i = 1; $i <= sizeof($data); $i++) {
+            $byte = $data[$i];
+            if ($i <= 16) {
+                $headers[] = $byte;
+                continue;
+            }
+            $this->memory[$j] = $byte;
+            $j++;
+
+            if ($j === 0x10000) {
+                break;
+            }
+        }
     }
 
     /**
