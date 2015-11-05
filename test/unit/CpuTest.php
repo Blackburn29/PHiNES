@@ -481,6 +481,81 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0x0808, $this->cpu->getRegisters()->getPC());
     }
 
+    public function testSetCarryAndSubtractGivesCorrectResult()
+    {
+        $this->cpu->getRegisters()->setPC(0xFFF0);
+        $this->cpu->execute(0x38);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->cpu->getRegisters()->setA(0x05);
+        $this->cpu->getRegisters()->setX(0x05);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getMemory()->write(0xFFF5, 0x05);
+        $this->cpu->execute(0xFD); //SBC absInx
+        $this->assertEquals(0x00, $this->cpu->getRegisters()->getA());
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+    }
+
+    public function testSedSetsDecimalModeFlag()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::D, 0);
+        $this->cpu->execute(0xF8);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::D));
+    }
+
+    public function testSeiSetsDecimalModeFlag()
+    {
+        $this->cpu->getRegisters()->setStatusBit(Registers::I, 0);
+        $this->cpu->execute(0x78);
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::I));
+    }
+
+    public function testStaWillStoreACorrectlyWithIndirectIndex()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->getMemory()->write(0x05, 0xF0);
+        $this->cpu->getRegisters()->setA(0x05);
+        $this->cpu->getRegisters()->setY(0x05);
+        $this->cpu->execute(0x91);
+        $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xF5));
+    }
+
+    public function testStaWillStoreACorrectlyWithIndexIndirect()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getRegisters()->setX(0x02);
+        $this->cpu->getMemory()->write(0x12, 0x05);
+        $this->cpu->getRegisters()->setA(0x05);
+        $this->cpu->execute(0x81);
+        $this->assertEquals(0x05, $this->cpu->getMemory()->read(0x12));
+    }
+
+    public function testStxWillStoreXCorrectly()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getRegisters()->setX(0x05);
+        $this->cpu->execute(0x8E);
+        $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xFFF0));
+    }
+
+    public function testStyWillStoreYCorrectly()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getRegisters()->setY(0x05);
+        $this->cpu->execute(0x8C);
+        $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xFFF0));
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testInvalidOpcodeWillThrowExeption()
+    {
+        $this->cpu->execute(0xFF);
+    }
+
     protected function setUp()
     {
         $this->cpu = new CPU();

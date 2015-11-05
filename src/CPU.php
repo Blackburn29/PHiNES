@@ -267,7 +267,8 @@ class CPU
         $low = $this->memory->read($adr);
         $high = $this->memory->read(($adr + 1) & 0x00FF);
 
-        return (($high << 8) & 0xFF) | $low;
+        $result = (($high << 8) & 0xFF) | $low;
+        return $result;
     }
 
 
@@ -600,7 +601,7 @@ class CPU
     public function sbc($address)
     {
         $value = $this->registers->getA() - $this->getMemory()->read($address);
-        $value = $value - (~$this->registers->getStatus(Registers::c));
+        $value = $value - (1 - $this->registers->getStatus(Registers::C));
         $this->registers->setOverflow($value);
         $this->registers->setCarry($value);
         $this->registers->setSign($value);
