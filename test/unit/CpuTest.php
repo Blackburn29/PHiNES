@@ -4,6 +4,7 @@ namespace PHiNES;
 
 use PHiNES\CPU;
 use PHiNES\Registers\CPU\Registers;
+use PHiNES\Interrupts\CPU\Interrupts;
 use PHiNES\Instructions\CPU\InstructionSet;
 
 class CpuTest extends \PHPUnit_Framework_TestCase
@@ -659,6 +660,53 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0xFE, $this->cpu->getRegisters()->getA());
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testIrqWillFireWhenSet()
+    {
+        $this->cpu->getInterrupts()->setInterrupt(Interrupts::IRQ, true);
+        $this->cpu->getRegisters()->setP(0xFB);
+        $this->cpu->getRegisters()->setPC(0xF000);
+        $this->cpu->getMemory()->write(0xFFFE, 0x10);
+        $this->cpu->getMemory()->write(0xFFFF, 0x10);
+
+        $this->cpu->execute(0xEA); //NOP
+        $this->assertEquals(0xFB, $this->cpu->pull());
+        $this->assertEquals(0xF000, $this->cpu->pull16());
+        //PC has incremented by one since NOP instruction was executed
+        $this->assertEquals(0x1011, $this->cpu->getRegisters()->getPC());
+        $this->assertNotTrue($this->cpu->getInterrupts()->getInterrupt(Interrupts::IRQ));
+    }
+
+    public function testNmiWillFireWhenSet()
+    {
+        //NMI should still interrupt even if I is set
+        $this->cpu->getRegisters()->setStatusBit(Registers::I, 1);
+        $this->cpu->getInterrupts()->setInterrupt(Interrupts::NMI, true);
+        $this->cpu->getRegisters()->setP(0xFB);
+        $this->cpu->getRegisters()->setPC(0xF000);
+        $this->cpu->getMemory()->write(0xFFFA, 0x10);
+        $this->cpu->getMemory()->write(0xFFFB, 0x10);
+
+        $this->cpu->execute(0xEA); //NOP
+        $this->assertEquals(0xFB, $this->cpu->pull());
+        $this->assertEquals(0xF000, $this->cpu->pull16());
+        //PC has incremented by one since NOP instruction was executed
+        $this->assertEquals(0x1011, $this->cpu->getRegisters()->getPC());
+        $this->assertNotTrue($this->cpu->getInterrupts()->getInterrupt(Interrupts::NMI));
+    }
+
+    public function testResetWillSetPCBackToEntryPoint()
+    {
+        $this->cpu->getInterrupts()->setInterrupt(Interrupts::RST, true);
+        $this->cpu->getRegisters()->setPC(0xF000);
+        $this->cpu->getMemory()->write(0xFFFC, 0x10);
+        $this->cpu->getMemory()->write(0xFFFD, 0x10);
+
+        $this->cpu->execute(0xEA); //NOP
+        //PC has incremented by one since NOP instruction was executed
+        $this->assertEquals(0x1011, $this->cpu->getRegisters()->getPC());
+        $this->assertNotTrue($this->cpu->getInterrupts()->getInterrupt(Interrupts::RST));
     }
 
     /**

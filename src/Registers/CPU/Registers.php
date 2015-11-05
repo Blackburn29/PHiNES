@@ -14,7 +14,7 @@ class Registers
     const Z = 0x02; //Zero
     const I = 0x04; //Interrupt
     const D = 0x08; //Decimal
-    const B = 0x10;
+    const B = 0x10; //BRK Executed
     const U = 0x20; //Unused
     const V = 0x40; //Overflow
     const N = 0x80; //Sign

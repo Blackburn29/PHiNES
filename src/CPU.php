@@ -68,7 +68,7 @@ class CPU
             'LDX' => function($v){$this->ldx($v);},
             'LDY' => function($v){$this->ldy($v);},
             'LSR' => function($v, $mode){$this->lsr($v, $mode);},
-            'NOP' => function($v){$this->nop($v);},
+            'NOP' => function($v){},
             'ORA' => function($v){$this->ora($v);},
             'PHA' => function($v){$this->pha($v);},
             'PHP' => function($v){$this->php($v);},
@@ -792,21 +792,64 @@ class CPU
 
         if (!$this->registers->getStatus(Registers::I)
             && $this->interrupts->getInterrupt(Interrupts::IRQ)) {
-            Interrupts::executeIrq(this);
+            $this->executeIrq();
             $cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::NMI)) {
-            Interrupts::executeNmi(this);
+            $this->executeNmi();
             $cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::RST)) {
-            Interrupts::executeReset(this);
+            $this->executeReset();
             $cycles = 7;
         }
 
         return $cycles;
+    }
+
+    /**
+     * Maskable interrupt. 
+     * Push PC to stack
+     * Push P to stack
+     * Set I to ignore interrupts
+     * Read 16bit interrupt vector located at FFFE-F
+     * Place result in PC
+     */
+    public function executeIrq()
+    {
+        $this->push16($this->registers->getPC());
+        $this->push($this->registers->getP());
+        $this->registers->setStatusBit(Registers::I, 1);
+        $addr = $this->memory->read16(0xFFFE);
+        $this->registers->setPC($addr);
+        $this->interrupts->setInterrupt(Interrupts::IRQ, false);
+    }
+
+    /**
+     * Non-maskable interrupt
+     * Same as IRQ except interrupt vector is at FFFA-B
+     */
+    public function executeNmi()
+    {
+        $this->push16($this->registers->getPC());
+        $this->push($this->registers->getP());
+        $this->registers->setStatusBit(Registers::I, 1);
+        $addr = $this->memory->read16(0xFFFA);
+        $this->registers->setPC($addr);
+        $this->interrupts->setInterrupt(Interrupts::NMI, false);
+    }
+
+    /**
+     * Reset interrupt.
+     * Set PC to initial starting address FFFC
+     */
+    public function executeReset()
+    {
+        $addr = $this->memory->read16(0xFFFC);
+        $this->registers->setPC($addr);
+        $this->interrupts->setInterrupt(Interrupts::RST, false);
     }
 
     private function shiftLeft($value)
