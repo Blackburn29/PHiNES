@@ -70,6 +70,15 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($curr + $offset + 1, $this->cpu->relative());
     }
 
+    public function testRelativeAddressingModeReturnsCorrectValueWithOffset()
+    {
+        $curr = $this->cpu->getRegisters()->getPC();
+        $offset = 0x80;
+        $this->cpu->getMemory()->write($curr, $offset);
+
+        $this->assertEquals($curr + (-(0x100 - $offset)) + 1, $this->cpu->relative());
+    }
+
     public function testAbsoluteAddressingModeReturnsCorrectValue()
     {
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x11);
@@ -146,6 +155,16 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->cpu->execute(0x0A);
         $this->assertEquals(0x02, $this->cpu->getRegisters()->getA());
     }
+
+    public function testAslShiftsAndSetsFlagsCorrectlyWithoutAccumulator()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write(0xFF01, 0x01);
+        $this->cpu->execute(0x0E);
+        $this->assertEquals(0x02, $this->cpu->getMemory()->read(0xFF01));
+    }
+
 
     public function testBitOperationSetsFlagsCorrectly()
     {
@@ -413,6 +432,16 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
     }
 
+    public function testLsrWillShiftBitsCorrectlyFromMemory()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write(0xFF01, 0xEE);
+        $this->cpu->execute(0x4E);
+        $this->assertEquals(0x77, $this->cpu->getMemory()->read(0xFF01));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+    }
+
     public function testOraLogic()
     {
         $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x00);
@@ -452,12 +481,38 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
     }
 
+    public function testRotateLeftInstructionRotatesCorrectlyWithMemory()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write(0xFF01, 0x6E);
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
+        $this->cpu->execute(0x2E);
+        $this->assertEquals(0xDD, $this->cpu->getMemory()->read(0xFF01));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
     public function testRotateRightInstructionRotatesCorrectly()
     {
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
         $this->cpu->getRegisters()->setA(0x6E);
         $this->cpu->execute(0x6A);
         $this->assertEquals(0xB7, $this->cpu->getRegisters()->getA());
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
+        $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
+        $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));
+    }
+
+    public function testRotateRightInstructionRotatesCorrectlyWithMemory()
+    {
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write(0xFF01, 0x6E);
+        $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
+        $this->cpu->execute(0x6E);
+        $this->assertEquals(0xB7, $this->cpu->getMemory()->read(0xFF01));
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::C));
         $this->assertNotTrue($this->cpu->getRegisters()->getStatus(Registers::Z));
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::N));

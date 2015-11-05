@@ -293,13 +293,14 @@ class CPU
     public function asl($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
+            $origAddr = $address;
             $address = $this->getMemory()->read($address);
         }
 
         $shifted = $this->shiftLeft($address);
 
         if ($mode != InstructionSet::ADR_ACC) {
-            $this->getMemory()->write($address, $shifted);
+            $this->getMemory()->write($origAddr, $shifted);
         } else {
             $this->registers->setA($shifted);
         }
@@ -507,13 +508,14 @@ class CPU
     public function lsr($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
+            $origAddr = $address;
             $address = $this->getMemory()->read($address);
         }
 
         $shifted = $this->shiftRight($address);
 
         if ($mode != InstructionSet::ADR_ACC) {
-            $this->getMemory()->write($address, $shifted);
+            $this->getMemory()->write($origAddr, $shifted);
         } else {
             $this->registers->setA($shifted);
         }
@@ -558,13 +560,14 @@ class CPU
     public function rol($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
+            $origAddr = $address;
             $address = $this->getMemory()->read($address);
         }
 
         $shifted = $this->rotateLeft($address);
 
         if ($mode != InstructionSet::ADR_ACC) {
-            $this->getMemory()->write($address, $shifted);
+            $this->getMemory()->write($origAddr, $shifted);
         } else {
             $this->registers->setA($shifted);
         }
@@ -574,13 +577,14 @@ class CPU
     public function ror($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
+            $origAddr = $address;
             $address = $this->getMemory()->read($address);
         }
 
         $shifted = $this->rotateRight($address);
 
         if ($mode != InstructionSet::ADR_ACC) {
-            $this->getMemory()->write($address, $shifted);
+            $this->getMemory()->write($origAddr, $shifted);
         } else {
             $this->registers->setA($shifted);
         }
