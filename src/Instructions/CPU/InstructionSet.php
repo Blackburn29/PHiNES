@@ -210,6 +210,9 @@ class InstructionSet
         $set->addInstruction(new Instruction('STY', 0x94, self::ADR_ZPX, 2, 4));
         $set->addInstruction(new Instruction('STY', 0x8C, self::ADR_ABS, 3, 4));
 
+        //Unofficial Opcodes
+        $set->addInstruction(new Instruction('ALR', 0x4B, self::ADR_IMM, 3, 4));
+
         return $set;
     }
 

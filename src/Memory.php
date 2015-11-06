@@ -48,6 +48,18 @@ class Memory
         $high = $this->read($address + 1);
         return (($high << 8) | $low) & 0xFFFF;
     }
+    
+    /**
+     * Reads a 16bit block of memory with wraparound bug.
+     * @param @address int
+     * @return int 
+     */
+    public function read16bug($address)
+    {
+        $low = $this->read($address);
+        $high = $this->read(($address & 0xFF00) | ($address & 0xFF));
+        return (($high << 8) | $low) & 0xFFFF;
+    }
 
     /**
      * Writes a value to memory at given address.

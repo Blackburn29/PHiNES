@@ -22,7 +22,7 @@ class RunEmu extends Command
     {
         $cpu = new CPU(true);
 
-        echo "Running rom test!";
+        echo "Running rom test!\n";
         $cpu->getRegisters()->setP(0x24);
         $cpu->getRegisters()->setSP(0xFD);
         $cpu->getRegisters()->setPC(0xC000);
@@ -37,3 +37,4 @@ class RunEmu extends Command
         $cpu->step();
     }
 }
+

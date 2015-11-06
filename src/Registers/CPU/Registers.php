@@ -69,7 +69,7 @@ class Registers
      */
     public function setZero($value)
     {
-        $this->setStatusBit(self::Z, $value == 0 ? 1 : 0);
+        $this->setStatusBit(self::Z, ($value & 0xFF) == 0 ? 1 : 0);
     }
 
     /**

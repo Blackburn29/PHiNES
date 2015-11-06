@@ -105,7 +105,7 @@ class CPU
     {
         for(;;) {
             $this->execute();
-            sleep(0.5);
+            usleep(10000);
         }
     }
 
@@ -237,15 +237,10 @@ class CPU
 
     public function indirect()
     {
-        $addr =  $this->memory->read16($this->registers->getPC() + 1);
-
-        //Handle rollover bug
-        $addrRoll = ($addr & 0xFF00) | (($addr & 0xFF) + 1);
-
-        $high = $this->memory->read($addrRoll);
-        $low = $this->memory->read($addr);
-
-        return (($high << 8) | $low);
+        return $this->memory->read16bug(
+            $this->memory->read16($this->registers->getPC() + 1) +
+            $this->registers->getX()
+        );
     }
 
     public function absoluteIndexed($mode)
@@ -262,44 +257,59 @@ class CPU
 
     public function indirectIndex()
     {
-        $indr = $this->indirect();
-        $result = $indr + $this->registers->getY();
+        $value = $this->memory->read16bug($this->memory->read($this->registers->getPC() + 1)) +
+            $this->registers->getY();
 
-        if ($this->memory->samePage($indr, $result)) {
+        if ($this->memory->samePage($value - $this->registers->getY(), $value)) {
             $this->pageFlag = true;
         }
 
-        return $result;
+        return $value;
     }
 
     public function indexIndirect()
     {
-        $value = $this->memory->read16($this->registers->getPC() + 1);
-        $adr = ($value + $this->registers->getX()) & 0xFFFF;
+        $mem = $this->memory->read($this->registers->getPC() + 1);
+        $value = $mem + $this->registers->getX();
 
-        $low = $this->memory->read($adr);
-        $high = $this->memory->read(($adr + 1) & 0x00FF);
+        printf("%X + %X\n", $mem, $value);
 
-        $result = (($high << 8) & 0xFF) | $low;
-        return $result;
+        return $this->memory->read16bug($value);
     }
 
 
     /* CPU Operations */
     public function adc($address)
     {
-        $address = $this->registers->getA() + $address + ($this->registers->getStatus(Registers::C) ? 1 : 0);
-        $this->registers->setOverflow($address);
-        $this->registers->setCarry($address);
-        $this->registers->setSign($address);
-        $this->registers->setZero($address);
-        $this->registers->setA($address & 0xFF);
+        $a = $this->registers->getA();
+        $mem = $this->memory->read($address);
+        $c = ($this->registers->getStatus(Registers::C) ? 1 : 0);
+        $value = $a + $mem + $c;
+
+        $this->registers->setA($value);
+        $this->registers->setZero($value);
+        $this->registers->setSign($value);
+
+        if (((!((($a ^ $mem)) & 0x80) != 0) && ((($a ^ $value) & 0x80)) != 0)) {
+            $this->registers->setStatusBit(Registers::V, 1);
+        } else {
+            $this->registers->setStatusBit(Registers::V, 0);
+        }
+        
+
+        if ($value > 0xFF) {
+            $this->registers->setStatusBit(Registers::C, 1);
+        } else {
+            $this->registers->setStatusBit(Registers::C, 0);
+        }
     }
 
     public function andA($address)
     {
-        $value = $this->getMemory()->read($address);
-        $this->registers->setA($this->registers->getA() & $value);
+        $value = $this->registers->getA() & $this->getMemory()->read($address);
+        $this->registers->setA($value);
+        $this->registers->setZero($value);
+        $this->registers->setSign($value);
     }
 
     public function asl($address, $mode)
@@ -337,10 +347,9 @@ class CPU
     public function bit($address) 
     {
         $value = $this->getMemory()->read($address);
-        $and = $value & $this->registers->getA();
-        $bit6 = ($and & Registers::V) >> 6;
-        $bit7 = ($and & Registers::N) >> 7;
-        $this->registers->setZero($and);
+        $bit6 = ($value & Registers::V) >> 6;
+        $bit7 = ($value & Registers::N) >> 7;
+        $this->registers->setZero($value & $this->registers->getA());
         $this->registers->setStatusBit(Registers::V, $bit6);
         $this->registers->setStatusBit(Registers::N, $bit7);
     }
@@ -550,7 +559,7 @@ class CPU
 
     public function php($address)
     {
-        $this->push($this->registers->getP());
+        $this->push($this->registers->getP() | Registers::U | Registers::B);
     }
 
     public function pla($address) 
@@ -566,7 +575,7 @@ class CPU
         $value = $this->pull();
         $this->registers->setZero($value);
         $this->registers->setSign($value);
-        $this->registers->setP($value);
+        $this->registers->setP(($value & 0xEF) | Registers::U);
     }
 
     public function rol($address, $mode)
@@ -605,7 +614,7 @@ class CPU
 
     public function rti($address)
     {
-        $this->registers->setP($this->pull());
+        $this->registers->setP(($this->pull() & 0xEF) | Registers::U);
         $this->registers->setPC($this->pull16());
     }
 
@@ -616,13 +625,24 @@ class CPU
 
     public function sbc($address)
     {
-        $value = $this->registers->getA() - $this->getMemory()->read($address);
-        $value = $value - (1 - $this->registers->getStatus(Registers::C));
-        $this->registers->setOverflow($value);
-        $this->registers->setCarry($value);
+        $a = $this->registers->getA();
+        $mem = $this->getMemory()->read($address);
+        $value = $a - $mem - (1 - $this->registers->getStatus(Registers::C) ? 1 : 0);
         $this->registers->setSign($value);
         $this->registers->setZero($value);
         $this->registers->setA($value);
+
+        if (((($a ^ $value) & 0x80) != 0 && (($a ^ $mem) & 0x80) != 0)) {
+            $this->registers->setStatusBit(Registers::V, 1);
+        } else {
+            $this->registers->setStatusBit(Registers::V, 0);
+        }
+        
+        if ($value >= 0) {
+            $this->registers->setStatusBit(Registers::C, 1);
+        } else {
+            $this->registers->setStatusBit(Registers::C, 0);
+        }
     }
 
     public function sec($address)
@@ -691,8 +711,6 @@ class CPU
     public function txs($address)
     {
         $value = $this->registers->getX();
-        $this->registers->setSign($value);
-        $this->registers->setZero($value);
         $this->registers->setSP($value);
     }
 
@@ -734,8 +752,10 @@ class CPU
 
         $this->registers->setZero($t);
 
-        if ($this->registers->getA() >= $value) {
+        if ($register >= $value) {
             $this->registers->setStatusBit(Registers::C, 1);
+        } else {
+            $this->registers->setStatusBit(Registers::C, 0);
         }
     }
 
@@ -778,7 +798,7 @@ class CPU
     public function push16($value)
     {
         $this->push($value >> 8);
-        $this->push($value);
+        $this->push($value & 0xFF);
     }
 
     public function pull()
@@ -789,9 +809,9 @@ class CPU
 
     public function pull16()
     {
-        $this->registers->setSP($this->registers->getSP() + 1);
-        return $this->getMemory()->read16(0x100 | $this->registers->getSP());
-
+        $low = $this->pull();
+        $high = $this->pull();
+        return $high << 8 | $low;
     }
 
     /**
@@ -867,8 +887,9 @@ class CPU
     private function shiftLeft($value)
     {
         $shifted = $value << 1;
-        $this->registers->setCarry($shifted);
+        $this->registers->setStatusBit(Registers::C, ($value >> 7) & 0x01);
         $this->registers->setSign($shifted);
+        $this->registers->setZero($shifted);
         
         return $shifted;
     }
@@ -876,8 +897,8 @@ class CPU
     private function shiftRight($value)
     {
         $shifted = $value >> 1;
-        $this->registers->setCarry($shifted);
-        $this->registers->setSign(0);
+        $this->registers->setStatusBit(Registers::C, $value & 0x01);
+        $this->registers->setSign($shifted);
         $this->registers->setZero($shifted);
         
         return $shifted;
