@@ -135,8 +135,7 @@ class CPU
             $cycles+= $instruction->getCycles($this->pageFlag);
             $this->pageFlag = false;
 
-            $this->registers->incrementPC(1);
-
+            $this->registers->incrementPC($instruction->getLength());
 
             //Execute the instruction
             $this->opMap[$instruction->getName()]($value, $instruction->getAddressingMode());
@@ -204,48 +203,41 @@ class CPU
 
     public function immediate()
     {
-         return $this->registers->getPC();
-         $this->registers->incrementPC(1);
+         return $this->registers->getPC() + 1;
     }
 
     public function zeroPage()
     {
-        return $this->memory->read($this->registers->getPC());
-        $this->registers->incrementPC(1);
+        return $this->memory->read($this->registers->getPC() + 1);
     }
 
     public function zeroPageIndex($mode)
     {
         $reg = $this->getRegisterFromAddressingMode($mode);
-        $mem = $this->memory->read($this->registers->getPC());
-        $this->registers->incrementPC(1);
+        $mem = $this->memory->read($this->registers->getPC() + 1);
 
         return $mem + $reg;
     }
 
     public function relative()
     {
-        $mem = $this->memory->read($this->registers->getPC());
-        $offset = $mem;
+        $mem = $this->memory->read($this->registers->getPC() + 1);
+        $pc = $this->registers->getPC();
 
-        if ($mem > 0x7F) {
-            $offset = -(0x100 - $mem);
+        if ($mem < 0x80) {
+            return $pc + 2 + $mem;
         }
-
-        $this->registers->incrementPC(1);
-        return $this->registers->getPC() + $offset;
+            return $pc + 2 + $mem - 0x100;
     }
 
     public function absolute()
     {
-        return $this->memory->read16($this->registers->getPC());
-        $this->registers->incrementPC(2);
+        return $this->memory->read16($this->registers->getPC() + 1);
     }
 
     public function indirect()
     {
-        $addr =  $this->memory->read16($this->registers->getPC());
-        $this->registers->incrementPC(2);
+        $addr =  $this->memory->read16($this->registers->getPC() + 1);
 
         //Handle rollover bug
         $addrRoll = ($addr & 0xFF00) | (($addr & 0xFF) + 1);
@@ -258,9 +250,8 @@ class CPU
 
     public function absoluteIndexed($mode)
     {
-        $addr = $this->memory->read16($this->registers->getPC());
+        $addr = $this->memory->read16($this->registers->getPC() + 1);
         $result =  $addr + $this->getRegisterFromAddressingMode($mode);
-        $this->registers->incrementPC(2);
 
         if ($this->memory->samePage($addr, $result)) {
             $this->pageFlag = true;
@@ -273,7 +264,6 @@ class CPU
     {
         $indr = $this->indirect();
         $result = $indr + $this->registers->getY();
-        $this->registers->incrementPC(1);
 
         if ($this->memory->samePage($indr, $result)) {
             $this->pageFlag = true;
@@ -284,9 +274,8 @@ class CPU
 
     public function indexIndirect()
     {
-        $value = $this->memory->read16($this->registers->getPC());
+        $value = $this->memory->read16($this->registers->getPC() + 1);
         $adr = ($value + $this->registers->getX()) & 0xFFFF;
-        $this->registers->incrementPC(1);
 
         $low = $this->memory->read($adr);
         $high = $this->memory->read(($adr + 1) & 0x00FF);
@@ -305,7 +294,6 @@ class CPU
         $this->registers->setSign($address);
         $this->registers->setZero($address);
         $this->registers->setA($address & 0xFF);
-
     }
 
     public function andA($address)

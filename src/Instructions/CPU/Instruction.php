@@ -50,6 +50,15 @@ class Instruction
     }
 
     /**
+     * Returns the length of the instruction to offset the PC
+     * @return int
+     */
+    public function getLength()
+    {
+        return $this->length;
+    }
+
+    /**
      * Returns the number of cycles the instruction takes to execute
      * @param bool $pageCross the page cross flag to know when to increment cycles
      * @return int
