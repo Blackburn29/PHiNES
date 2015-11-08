@@ -59,6 +59,7 @@ class CPU
             'CMP' => function($v){$this->cmp($v);},
             'CPX' => function($v){$this->cpx($v);},
             'CPY' => function($v){$this->cpy($v);},
+            '*DCP' => function($v){$this->dcp($v);},
             'DEC' => function($v){$this->dec($v);},
             'DEX' => function($v){$this->dex($v);},
             'DEY' => function($v){$this->dey($v);},
@@ -66,29 +67,38 @@ class CPU
             'INC' => function($v){$this->inc($v);},
             'INX' => function($v){$this->inx($v);},
             'INY' => function($v){$this->iny($v);},
+            '*ISB' => function($v){$this->isb($v);},
             'JMP' => function($v){$this->jmp($v);},
             'JSR' => function($v){$this->jsr($v);},
+            '*LAX' => function($v){$this->lda($v); $this->ldx($v);},
             'LDA' => function($v){$this->lda($v);},
             'LDX' => function($v){$this->ldx($v);},
             'LDY' => function($v){$this->ldy($v);},
             'LSR' => function($v, $mode){$this->lsr($v, $mode);},
             'NOP' => function($v){},
+            '*NOP' => function($v){},
             'ORA' => function($v){$this->ora($v);},
             'PHA' => function($v){$this->pha($v);},
             'PHP' => function($v){$this->php($v);},
             'PLA' => function($v){$this->pla($v);},
             'PLP' => function($v){$this->plp($v);},
+            '*RLA' => function($v, $mode){$this->rla($v, $mode);},
             'ROL' => function($v, $mode){$this->rol($v, $mode);},
             'ROR' => function($v, $mode){$this->ror($v, $mode);},
+            '*RRA' => function($v, $mode){$this->rra($v, $mode);},
             'RTI' => function($v){$this->rti($v);},
             'RTS' => function($v){$this->rts($v);},
+            '*SAX' => function($v){$this->sax($v);},
             'SBC' => function($v){$this->sbc($v);},
+            '*SBC' => function($v){$this->sbc($v);},
             'SEC' => function($v){$this->sec($v);},
             'SED' => function($v){$this->sed($v);},
             'SEI' => function($v){$this->sei($v);},
+            '*SLO' => function($v, $mode){$this->slo($v, $mode);},
             'STA' => function($v){$this->sta($v);},
             'STX' => function($v){$this->stx($v);},
             'STY' => function($v){$this->sty($v);},
+            '*SRE' => function($v, $mode){$this->sre($v, $mode);},
             'TAX' => function($v){$this->tax($v);},
             'TAY' => function($v){$this->tay($v);},
             'TSX' => function($v){$this->tsx($v);},
@@ -105,7 +115,7 @@ class CPU
     {
         for(;;) {
             $this->execute();
-            usleep(10000);
+            usleep(1000);
         }
     }
 
@@ -129,7 +139,7 @@ class CPU
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
 
             if ($this->DEBUG) {
-                printf("%d %04X  %04X\t%s  %04X\t%s\n", $this->instrCounter++, $this->registers->getPC()-1, $instruction->getOpcode(), $instruction->getName(), $value, $this->registers->toString());
+                printf("%d %04X  %02X\t%s  %04X\t%s\n", $this->instrCounter++, $this->registers->getPC(), $instruction->getOpcode(), $instruction->getName(), $value, $this->registers->toString());
             }
 
             $cycles+= $instruction->getCycles($this->pageFlag);
@@ -237,10 +247,15 @@ class CPU
 
     public function indirect()
     {
-        return $this->memory->read16bug(
-            $this->memory->read16($this->registers->getPC() + 1) +
-            $this->registers->getX()
-        );
+        $low = $this->memory->read($this->registers->getPC() + 1);
+        $high = $this->memory->read($this->registers->getPC() + 2);
+
+        printf("%02X %02X\n", $high, $low);
+        $alow = $this->memory->read(($high << 8) | $low);
+        $ahigh = $this->memory->read(($high << 8) | (($low + 1) & 0xFF));
+        printf("%02X %02X\n", $ahigh, $alow);
+
+        return (($ahigh << 8) | $alow);
     }
 
     public function absoluteIndexed($mode)
@@ -252,13 +267,14 @@ class CPU
             $this->pageFlag = true;
         }
 
-        return $result;
+        return $result & 0xFFFF;
     }
 
+    //(indr), x
     public function indirectIndex()
     {
-        $value = $this->memory->read16bug($this->memory->read($this->registers->getPC() + 1)) +
-            $this->registers->getY();
+        $value = ($this->memory->read16bug($this->memory->read($this->registers->getPC() + 1)) +
+            $this->registers->getY()) & 0xFFFF;
 
         if ($this->memory->samePage($value - $this->registers->getY(), $value)) {
             $this->pageFlag = true;
@@ -267,12 +283,11 @@ class CPU
         return $value;
     }
 
+    //(indr, x)
     public function indexIndirect()
     {
         $mem = $this->memory->read($this->registers->getPC() + 1);
-        $value = $mem + $this->registers->getX();
-
-        printf("%X + %X\n", $mem, $value);
+        $value = ($mem + $this->registers->getX()) & 0xFFFF;
 
         return $this->memory->read16bug($value);
     }
@@ -424,6 +439,12 @@ class CPU
         $this->compare($this->registers->getY(), $address);
     }
 
+    public function dcp($address)
+    {
+        $this->dec($address);
+        $this->cmp($address);
+    }
+
     public function dec($address)
     {
         $value = $this->getMemory()->read($address) - 1;
@@ -488,6 +509,12 @@ class CPU
         $this->registers->setSign($value);
         $this->registers->setZero($value);
 
+    }
+
+    public function isb($address)
+    {
+        $this->inc($address);
+        $this->sbc($address);
     }
 
     public function jmp($address)
@@ -578,6 +605,12 @@ class CPU
         $this->registers->setP(($value & 0xEF) | Registers::U);
     }
 
+    public function rla($address, $mode)
+    {
+        $this->asl($address, $mode);
+        $this->andA($address);
+    }
+
     public function rol($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
@@ -612,6 +645,12 @@ class CPU
 
     }
 
+    public function rra($address, $mode)
+    {
+        $this->ror($address, $mode);
+        $this->adc($address);
+    }
+
     public function rti($address)
     {
         $this->registers->setP(($this->pull() & 0xEF) | Registers::U);
@@ -621,6 +660,11 @@ class CPU
     public function rts($address)
     {
         $this->registers->setPC($this->pull16() + 1);
+    }
+
+    public function sax($address)
+    {
+        $this->getMemory()->write($address, $this->registers->getA() & $this->registers->getX());
     }
 
     public function sbc($address)
@@ -660,6 +704,12 @@ class CPU
         $this->registers->setStatusBit(Registers::I, 1);
     }
 
+    public function slo($address, $mode)
+    {
+        $this->asl($address, $mode);
+        $this->ora($address);
+    }
+
     public function sta($address)
     {
         $this->getMemory()->write($address, $this->registers->getA());
@@ -673,6 +723,12 @@ class CPU
     public function sty($address)
     {
         $this->getMemory()->write($address, $this->registers->getY());
+    }
+
+    public function sre($address, $mode)
+    {
+        $this->lsr($address, $mode);
+        $this->eor($address);
     }
 
     public function tax($address)

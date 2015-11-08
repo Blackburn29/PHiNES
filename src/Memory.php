@@ -24,7 +24,7 @@ class Memory
     public function reset()
     {
         foreach ($this->memory as $block) {
-            $block = 0x00;
+            $block = 0xFF;
         }
     }
 
@@ -56,9 +56,10 @@ class Memory
      */
     public function read16bug($address)
     {
+        $b = $address + 1;
         $low = $this->read($address);
-        $high = $this->read(($address & 0xFF00) | ($address & 0xFF));
-        return (($high << 8) | $low) & 0xFFFF;
+        $high = $this->read($b);
+        return ($high << 8) | $low;
     }
 
     /**
