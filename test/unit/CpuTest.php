@@ -488,8 +488,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testRotateLeftInstructionRotatesCorrectlyWithMemory()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 2, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x01);
         $this->cpu->getMemory()->write(0xFF01, 0x6E);
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
         $this->cpu->execute(0x2E);
@@ -512,8 +512,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testRotateRightInstructionRotatesCorrectlyWithMemory()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x01);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 2, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x01);
         $this->cpu->getMemory()->write(0xFF01, 0x6E);
         $this->cpu->getRegisters()->setStatusBit(Registers::C, 1);
         $this->cpu->execute(0x6E);
@@ -529,7 +529,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->cpu->push(0x07);
         $this->cpu->push(0x06);
         $this->cpu->execute(0x40);
-        $this->assertEquals(0x06, $this->cpu->getRegisters()->getP());
+        $this->assertEquals(0x26, $this->cpu->getRegisters()->getP());
         $this->assertEquals(0x0807, $this->cpu->getRegisters()->getPC());
     }
 
@@ -548,8 +548,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->cpu->getRegisters()->getStatus(Registers::C));
         $this->cpu->getRegisters()->setA(0x05);
         $this->cpu->getRegisters()->setX(0x05);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 2, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xF0);
         $this->cpu->getMemory()->write(0xFFF5, 0x05);
         $this->cpu->execute(0xFD); //SBC absInx
         $this->assertEquals(0x00, $this->cpu->getRegisters()->getA());
@@ -572,7 +572,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testStaWillStoreACorrectlyWithIndirectIndex()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x05);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x05);
         $this->cpu->getMemory()->write(0x05, 0xF0);
         $this->cpu->getRegisters()->setA(0x05);
         $this->cpu->getRegisters()->setY(0x05);
@@ -582,7 +582,7 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testStaWillStoreACorrectlyWithIndexIndirect()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0x10);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0x10);
         $this->cpu->getRegisters()->setX(0x02);
         $this->cpu->getMemory()->write(0x12, 0x05);
         $this->cpu->getRegisters()->setA(0x05);
@@ -592,8 +592,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testStxWillStoreXCorrectly()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 2, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xF0);
         $this->cpu->getRegisters()->setX(0x05);
         $this->cpu->execute(0x8E);
         $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xFFF0));
@@ -601,8 +601,8 @@ class CpuTest extends \PHPUnit_Framework_TestCase
 
     public function testStyWillStoreYCorrectly()
     {
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xFF);
-        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC(), 0xF0);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 2, 0xFF);
+        $this->cpu->getMemory()->write($this->cpu->getRegisters()->getPC() + 1, 0xF0);
         $this->cpu->getRegisters()->setY(0x05);
         $this->cpu->execute(0x8C);
         $this->assertEquals(0x05, $this->cpu->getMemory()->read(0xFFF0));
@@ -725,8 +725,9 @@ class CpuTest extends \PHPUnit_Framework_TestCase
     /**
      * @group romtest
      */
-    public function testLoadingROMIntoMemory()
+    public function testRunNesTestRomExecutesSuccessfully()
     {
+        try {
         $this->cpu->getRegisters()->setP(0x24);
         $this->cpu->getRegisters()->setSP(0xFD);
         $this->cpu->getRegisters()->setPC(0xC000);
@@ -737,6 +738,17 @@ class CpuTest extends \PHPUnit_Framework_TestCase
         $this->cpu->getMemory()->write(0x4006, 0xFF);
         $this->cpu->getMemory()->write(0x4007, 0xFF);
         $this->cpu->getMemory()->write(0x4015, 0xFF);
+
+        $this->cpu->run();
+        //This exception will always happen when CPU is not in debug mode
+        //because at the end of execute we hit a bad opcode (KIL)
+        } catch (\Exception $e) {
+            $err1 = $this->cpu->getMemory()->read(0x0002);
+            $err2 = $this->cpu->getMemory()->read(0x0003);
+
+            $this->assertEquals(0x00, $err1);
+            $this->assertEquals(0x00, $err2);
+        }
     }
 
     protected function setUp()
