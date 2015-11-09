@@ -56,9 +56,10 @@ class Memory
      */
     public function read16bug($address)
     {
-        $b = $address + 1;
+        $b = ($address + 1) & 0x00FF;
         $low = $this->read($address);
         $high = $this->read($b);
+        //printf("b: %04X   low: %02X  high: %02X\n", $b, $low, $high);
         return ($high << 8) | $low;
     }
 

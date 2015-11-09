@@ -218,7 +218,8 @@ class CPU
 
     public function zeroPage()
     {
-        return $this->memory->read($this->registers->getPC() + 1);
+        $value = $this->memory->read($this->registers->getPC() + 1);
+        return $value;
     }
 
     public function zeroPageIndex($mode)
@@ -226,7 +227,8 @@ class CPU
         $reg = $this->getRegisterFromAddressingMode($mode);
         $mem = $this->memory->read($this->registers->getPC() + 1);
 
-        return $mem + $reg;
+        printf("%02X  %02X  %02X\n", $reg, $mem, ($mem+$reg) & 0xFF);
+        return ($mem + $reg) & 0xFF;
     }
 
     public function relative()
@@ -250,10 +252,8 @@ class CPU
         $low = $this->memory->read($this->registers->getPC() + 1);
         $high = $this->memory->read($this->registers->getPC() + 2);
 
-        printf("%02X %02X\n", $high, $low);
         $alow = $this->memory->read(($high << 8) | $low);
         $ahigh = $this->memory->read(($high << 8) | (($low + 1) & 0xFF));
-        printf("%02X %02X\n", $ahigh, $alow);
 
         return (($ahigh << 8) | $alow);
     }
@@ -287,9 +287,13 @@ class CPU
     public function indexIndirect()
     {
         $mem = $this->memory->read($this->registers->getPC() + 1);
-        $value = ($mem + $this->registers->getX()) & 0xFFFF;
+        $value = ($mem + $this->registers->getX()) & 0x00FF;
 
-        return $this->memory->read16bug($value);
+        $low = $this->memory->read($value);
+        $high = $this->memory->read(($value + 1) & 0x00FF);
+        //printf("%02X  %04X  %02X  %02X  %04X\n", $mem, $value, $low, $high, (($high << 8) | $low));
+
+        return (($high << 8) | $low);
     }
 
 

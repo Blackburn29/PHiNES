@@ -138,7 +138,7 @@ class InstructionSet
 
         $set->addInstruction(new Instruction('LSR', 0x4A, self::ADR_ACC, 1, 2));
         $set->addInstruction(new Instruction('LSR', 0x46, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('LSR', 0x56, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('LSR', 0x56, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('LSR', 0x4E, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('LSR', 0x5E, self::ADR_ABSX, 3, 7));
 
