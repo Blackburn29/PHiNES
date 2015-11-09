@@ -111,11 +111,9 @@ class CPU
     /**
      * Steps using <enter> until exception is thrown
      */
-    public function step()
+    public function run()
     {
-        for(;;) {
-            $this->execute();
-            usleep(1000);
+        while (!$this->execute()) {
         }
     }
 
@@ -140,6 +138,11 @@ class CPU
 
             if ($this->DEBUG) {
                 printf("%d %04X  %02X\t%s  %04X\t%s\n", $this->instrCounter++, $this->registers->getPC(), $instruction->getOpcode(), $instruction->getName(), $value, $this->registers->toString());
+
+                if (($this->registers->getSP() == 0xFD && $instruction->getName() == 'RTS')
+                    || $instruction->getName() == 'BRK') {
+                    return true;
+                }
             }
 
             $cycles+= $instruction->getCycles($this->pageFlag);
@@ -227,7 +230,6 @@ class CPU
         $reg = $this->getRegisterFromAddressingMode($mode);
         $mem = $this->memory->read($this->registers->getPC() + 1);
 
-        printf("%02X  %02X  %02X\n", $reg, $mem, ($mem+$reg) & 0xFF);
         return ($mem + $reg) & 0xFF;
     }
 
@@ -291,7 +293,6 @@ class CPU
 
         $low = $this->memory->read($value);
         $high = $this->memory->read(($value + 1) & 0x00FF);
-        //printf("%02X  %04X  %02X  %02X  %04X\n", $mem, $value, $low, $high, (($high << 8) | $low));
 
         return (($high << 8) | $low);
     }
@@ -611,7 +612,7 @@ class CPU
 
     public function rla($address, $mode)
     {
-        $this->asl($address, $mode);
+        $this->rol($address, $mode);
         $this->andA($address);
     }
 
@@ -635,14 +636,15 @@ class CPU
     public function ror($address, $mode)
     {
         if ($mode != InstructionSet::ADR_ACC) {
-            $origAddr = $address;
-            $address = $this->getMemory()->read($address);
+            $value = $this->getMemory()->read($address);
+        } else {
+            $value = $address;
         }
 
-        $shifted = $this->rotateRight($address);
+        $shifted = $this->rotateRight($value);
 
         if ($mode != InstructionSet::ADR_ACC) {
-            $this->getMemory()->write($origAddr, $shifted);
+            $this->getMemory()->write($address, $shifted);
         } else {
             $this->registers->setA($shifted);
         }
@@ -795,7 +797,7 @@ class CPU
     private function rotateRight($value)
     {
         $bit7 = $value & Registers::C;
-        $shifted = ($value >> 1 & 0x7F) | ($this->registers->getStatus(Registers::C) ? 0x80 : 0x00);
+        $shifted = (($value >> 1) & 0x7F) | ($this->registers->getStatus(Registers::C) ? 0x80 : 0x00);
         $this->registers->setStatusBit(Registers::C, $bit7);
         $this->registers->setSign($shifted);
         $this->registers->setZero($shifted);

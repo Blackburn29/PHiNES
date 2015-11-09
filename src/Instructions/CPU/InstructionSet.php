@@ -164,13 +164,13 @@ class InstructionSet
 
         $set->addInstruction(new Instruction('ROL', 0x2A, self::ADR_ACC, 1, 2));
         $set->addInstruction(new Instruction('ROL', 0x26, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('ROL', 0x36, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('ROL', 0x36, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('ROL', 0x2E, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('ROL', 0x3E, self::ADR_ABSX, 3, 7));
 
         $set->addInstruction(new Instruction('ROR', 0x6A, self::ADR_ACC, 1, 2));
         $set->addInstruction(new Instruction('ROR', 0x66, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('ROR', 0x76, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('ROR', 0x76, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('ROR', 0x6E, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('ROR', 0x7E, self::ADR_ABSX, 3, 7));
 
@@ -203,7 +203,7 @@ class InstructionSet
         $set->addInstruction(new Instruction('PLP', 0x28, self::ADR_IMP, 1, 4));
 
         $set->addInstruction(new Instruction('STX', 0x86, self::ADR_ZP, 2, 3));
-        $set->addInstruction(new Instruction('STX', 0x96, self::ADR_ZPX, 2, 4));
+        $set->addInstruction(new Instruction('STX', 0x96, self::ADR_ZPY, 2, 4));
         $set->addInstruction(new Instruction('STX', 0x8E, self::ADR_ABS, 3, 4));
 
         $set->addInstruction(new Instruction('STY', 0x84, self::ADR_ZP, 2, 3));
@@ -265,7 +265,7 @@ class InstructionSet
 
         //DCP
         $set->addInstruction(new Instruction('*DCP', 0xC7, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*DCP', 0xD7, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*DCP', 0xD7, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*DCP', 0xCF, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*DCP', 0xDF, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*DCP', 0xDB, self::ADR_ABSY, 3, 7));
@@ -274,7 +274,7 @@ class InstructionSet
 
         //ISB
         $set->addInstruction(new Instruction('*ISB', 0xE7, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*ISB', 0xF7, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*ISB', 0xF7, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*ISB', 0xEF, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*ISB', 0xFF, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*ISB', 0xFB, self::ADR_ABSY, 3, 7));
@@ -283,7 +283,7 @@ class InstructionSet
 
         //SLO
         $set->addInstruction(new Instruction('*SLO', 0x07, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*SLO', 0x17, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*SLO', 0x17, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*SLO', 0x0F, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*SLO', 0x1F, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*SLO', 0x1B, self::ADR_ABSY, 3, 7));
@@ -292,7 +292,7 @@ class InstructionSet
 
         //RLA
         $set->addInstruction(new Instruction('*RLA', 0x27, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*RLA', 0x37, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*RLA', 0x37, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*RLA', 0x2F, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*RLA', 0x3F, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*RLA', 0x3B, self::ADR_ABSY, 3, 7));
@@ -301,7 +301,7 @@ class InstructionSet
 
         //SRE
         $set->addInstruction(new Instruction('*SRE', 0x47, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*SRE', 0x57, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*SRE', 0x57, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*SRE', 0x4F, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*SRE', 0x5F, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*SRE', 0x5B, self::ADR_ABSY, 3, 7));
@@ -310,7 +310,7 @@ class InstructionSet
 
         //RRA
         $set->addInstruction(new Instruction('*RRA', 0x67, self::ADR_ZP, 2, 5));
-        $set->addInstruction(new Instruction('*RRA', 0x77, self::ADR_ZPY, 2, 6));
+        $set->addInstruction(new Instruction('*RRA', 0x77, self::ADR_ZPX, 2, 6));
         $set->addInstruction(new Instruction('*RRA', 0x6F, self::ADR_ABS, 3, 6));
         $set->addInstruction(new Instruction('*RRA', 0x7F, self::ADR_ABSX, 3, 7));
         $set->addInstruction(new Instruction('*RRA', 0x7B, self::ADR_ABSY, 3, 7));

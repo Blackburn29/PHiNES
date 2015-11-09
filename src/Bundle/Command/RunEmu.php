@@ -34,7 +34,23 @@ class RunEmu extends Command
         $cpu->getMemory()->write(0x4007, 0xFF);
         $cpu->getMemory()->write(0x4015, 0xFF);
 
-        $cpu->step();
+        $cpu->run();
+        $output->writeln("Execution completed successfully!");
+
+        $err1 = $cpu->getMemory()->read(0x0002);
+        $err2 = $cpu->getMemory()->read(0x0003);
+        if ($err1 != 0x00) {
+            $output->writeln(sprintf("There was an error @ 0x0002!  %02X", $err1));
+        } else {
+            $output->writeln("0x0002 shows no errors!");
+        }
+
+
+        if ($err2 != 0x00) {
+            $output->writeln(sprintf("There was an error @ 0x0003   %02X", $err2));
+        } else {
+            $output->writeln("0x0003 shows no errors!");
+        }
     }
 }
 
