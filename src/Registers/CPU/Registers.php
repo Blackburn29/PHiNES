@@ -7,7 +7,9 @@
 
 namespace PHiNES\Registers\CPU;
 
-class Registers
+use PHiNES\Registers\BaseRegister;
+
+class Registers implements BaseRegister
 {
     //Status Masks
     const C = 0x01; //Carry

@@ -19,6 +19,7 @@ class CPU
     private $interrupts;
     private $memory;
     private $opMap;
+    private $cycles;
 
     private $instrCounter = 1;
     private $pageFlag = false;
@@ -127,17 +128,22 @@ class CPU
     {
         if (!$opcode) {
             $opcode = $this->memory->read($this->registers->getPC());
-            
         }
-        $cycles = 0;
-        $cycles += $this->watchAndExecuteInterrupts();
-
+        $this->cycles = $this->cycles + $this->watchAndExecuteInterrupts();
         if (isset($this->instructions->getInstructions()[$opcode])) {
             $instruction = $this->instructions->getInstructions()[$opcode];
             $value = $this->getValueFromAddressingMode($instruction->getAddressingMode());
 
             if ($this->DEBUG) {
-                printf("%d %04X  %02X\t%s  %04X\t%s\n", $this->instrCounter++, $this->registers->getPC(), $instruction->getOpcode(), $instruction->getName(), $value, $this->registers->toString());
+                printf("%d %04X  %02X\t%s  %04X\t%s CYC:%3d\n",
+                    $this->instrCounter++,
+                    $this->registers->getPC(),
+                    $instruction->getOpcode(),
+                    $instruction->getName(),
+                    $value,
+                    $this->registers->toString(),
+                    ($this->cycles*3)%341
+                );
 
                 if (($this->registers->getSP() == 0xFD && $instruction->getName() == 'RTS')
                     || $instruction->getName() == 'BRK') {
@@ -145,7 +151,7 @@ class CPU
                 }
             }
 
-            $cycles+= $instruction->getCycles($this->pageFlag);
+            $this->cycles= $this->cycles + $instruction->getCycles($this->pageFlag);
             $this->pageFlag = false;
 
             $this->registers->incrementPC($instruction->getLength());
@@ -882,25 +888,25 @@ class CPU
      */
     private function watchAndExecuteInterrupts()
     {
-        $cycles = 0;
+        $this->cycles = 0;
 
         if (!$this->registers->getStatus(Registers::I)
             && $this->interrupts->getInterrupt(Interrupts::IRQ)) {
             $this->executeIrq();
-            $cycles = 7;
+            $this->cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::NMI)) {
             $this->executeNmi();
-            $cycles = 7;
+            $this->cycles = 7;
         }
 
         if ($this->interrupts->getInterrupt(Interrupts::RST)) {
             $this->executeReset();
-            $cycles = 7;
+            $this->cycles = 7;
         }
 
-        return $cycles;
+        return $this->cycles;
     }
 
     /**
