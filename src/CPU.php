@@ -10,7 +10,7 @@ use PHiNES\Registers\CPU\Registers;
 use PHiNES\Interrupts\CPU\Interrupts;
 use PHiNES\Memory;
 
-class CPU
+final class CPU
 {
     private $DEBUG = true;
 
