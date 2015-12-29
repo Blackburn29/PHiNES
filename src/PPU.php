@@ -11,6 +11,10 @@ final class PPU
 {
     private $DEBUG = true;
 
+    private $cycle = 340;
+    private $scanLine = 240;
+    private $frame = 0;
+
     private $ppuctrl;
     private $ppumask;
     private $ppustatus;
@@ -20,6 +24,9 @@ final class PPU
     private $ppuaddr;
     private $ppudata;
     private $oamdma;
+
+    private $vram;
+    private $sprite;
 
     public function __construct()
     {
@@ -32,5 +39,17 @@ final class PPU
         $this->ppuaddr = 0;
         $this->ppudata = 0;
         $this->oamdma = 0;
+
+        $this->vram = new Memory(0x8000);
+        $this->sprite = new Memory(0x100);
+    }
+
+    public function reset()
+    {
+        $this->cycle = 340;
+        $this->scanLine = 240;
+        $this->frame = 0;
+        $this->vram->reset();
+        $this->sprite->reset();
     }
 }

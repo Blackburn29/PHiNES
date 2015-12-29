@@ -9,10 +9,10 @@ use PHiNES\Exception\MemoryOverflowException;
 
 class Memory
 {
-    const MEM_SIZE = 65536;
+    const MEM_SIZE = 0x10000;
     private $memory;
 
-    public function __construct($size=0)
+    public function __construct($size=self::MEM_SIZE)
     {
         $this->memory = new \SplFixedArray($size ? $size : self::MEM_SIZE);
         $this->reset();
